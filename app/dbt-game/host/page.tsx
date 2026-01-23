@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 import { QRCodeSVG } from "qrcode.react"
 import { useEffect, useState } from "react"
 import { supabase } from "../lib/supabase"
