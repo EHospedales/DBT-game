@@ -23,9 +23,22 @@ export default function HostPage() {
 
   useEffect(() => {
     async function createGame() {
-      const res = await fetch("/api/game/create", { method: "POST" })
-      const data = await res.json()
-      setGameId(data.id)
+      try {
+        const res = await fetch("/api/game/create", { method: "POST" })
+        if (!res.ok) {
+          const error = await res.text()
+          console.error("Failed to create game:", error)
+          return
+        }
+        const data = await res.json()
+        if (data.id) {
+          setGameId(data.id)
+        } else {
+          console.error("No game ID in response:", data)
+        }
+      } catch (err) {
+        console.error("Error creating game:", err)
+      }
     }
     createGame()
   }, [])
