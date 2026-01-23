@@ -147,7 +147,7 @@ export default function HostPage() {
 
             <div className="flex justify-center mt-6">
               <QRCodeSVG
-                value={`http://localhost/dbt-game?game=${gameId}`}
+                value={`${typeof window !== 'undefined' ? window.location.origin : 'https://dbt-game-nmco.vercel.app'}/dbt-game/join?game=${gameId}`}
                 size={180}
                 bgColor="#FAFAF7"
                 fgColor="#2F3E46"
