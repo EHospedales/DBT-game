@@ -1,4 +1,41 @@
 @import "tailwindcss";
+@layer utilities {
+  .fade-in {
+    @apply opacity-0 animate-[fadeIn_0.4s_ease-out_forwards];
+  }
+
+  .slide-up {
+    @apply opacity-0 translate-y-4 animate-[slideUp_0.4s_ease-out_forwards];
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+}
 
 :root {
   --background: #ffffff;
