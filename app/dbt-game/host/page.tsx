@@ -1,5 +1,4 @@
 "use client"
-
 export const dynamic = "force-dynamic"
 
 import { QRCodeSVG } from "qrcode.react"
@@ -22,7 +21,6 @@ export default function HostPage() {
   const [phase, setPhase] = useState<"lobby" | "prompt" | "reveal" | "discussion">("lobby")
   const [currentPrompt, setCurrentPrompt] = useState("")
 
-  // Create game on load
   useEffect(() => {
     async function createGame() {
       const res = await fetch("/api/game/create", { method: "POST" })
@@ -32,82 +30,66 @@ export default function HostPage() {
     createGame()
   }, [])
 
-  // Players subscription
   useEffect(() => {
     if (!gameId) return
 
     const channel = supabase
       .channel(`players:${gameId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "players",
-          filter: `game_id=eq.${gameId}`,
-        },
-        (payload) => {
-          setPlayers((prev) => [...prev, payload.new])
-        }
-      )
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "players",
+        filter: `game_id=eq.${gameId}`,
+      }, (payload) => {
+        setPlayers((prev) => [...prev, payload.new])
+      })
       .subscribe()
 
     return () => {
-      void supabase.removeChannel(channel)
+      supabase.removeChannel(channel)
     }
   }, [gameId])
 
-  // Responses subscription
   useEffect(() => {
     if (!gameId) return
 
     const channel = supabase
       .channel(`responses:${gameId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "responses",
-          filter: `game_id=eq.${gameId}`,
-        },
-        (payload) => {
-          setResponses((prev) => [...prev, payload.new])
-        }
-      )
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "responses",
+        filter: `game_id=eq.${gameId}`,
+      }, (payload) => {
+        setResponses((prev) => [...prev, payload.new])
+      })
       .subscribe()
 
     return () => {
-      void supabase.removeChannel(channel)
+      supabase.removeChannel(channel)
     }
   }, [gameId])
 
-  // Phase subscription
   useEffect(() => {
     if (!gameId) return
 
     const channel = supabase
       .channel(`phase:${gameId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "games",
-          filter: `id=eq.${gameId}`,
-        },
-        (payload) => {
-          setPhase(payload.new.phase)
-        }
-      )
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "games",
+        filter: `id=eq.${gameId}`,
+      }, (payload) => {
+        setPhase(payload.new.phase)
+      })
       .subscribe()
 
     return () => {
-      void supabase.removeChannel(channel)
+      supabase.removeChannel(channel)
     }
   }, [gameId])
 
-  // Host actions
   async function sendPrompt() {
     if (!gameId) return
 
@@ -142,23 +124,14 @@ export default function HostPage() {
 
   return (
     <div className="p-10 space-y-10 bg-[#FAFAF7] min-h-screen">
-      <h1 className="text-3xl font-bold text-[#2F3E46]">
-        Host Controls
-      </h1>
+      <h1 className="text-3xl font-bold text-[#2F3E46]">Host Controls</h1>
 
-      {/* LOBBY */}
       {phase === "lobby" && (
         <>
-          {/* Game Code */}
           <div className="rounded-xl bg-[#F5F5F0] p-6 shadow-md border border-[#DDE2D9] space-y-4">
-            <p className="text-lg text-[#475B5A]">
-              Share this code with your group:
-            </p>
-            <p className="text-4xl font-bold tracking-widest text-[#2F3E46]">
-              {gameId}
-            </p>
+            <p className="text-lg text-[#475B5A]">Share this code with your group:</p>
+            <p className="text-4xl font-bold tracking-widest text-[#2F3E46]">{gameId}</p>
 
-            {/* QR Code */}
             <div className="flex justify-center mt-6">
               <QRCodeSVG
                 value={`http://localhost/dbt-game?game=${gameId}`}
@@ -169,20 +142,10 @@ export default function HostPage() {
                 includeMargin
               />
             </div>
-
-            <p className="text-center text-sm text-[#475B5A] mt-2">
-              Or visit:
-              <br />
-              <span className="font-mono text-[#2F3E46]">
-                http://localhost/dbt-game?game={gameId}
-              </span>
-            </p>
           </div>
 
-          {/* Player List */}
           <PlayerList players={players.map((p) => p.name)} />
 
-          {/* Start Game */}
           <button
             onClick={sendPrompt}
             className="px-6 py-3 rounded-lg bg-[#A3B18A] text-white text-lg shadow hover:bg-[#588157] transition"
@@ -192,13 +155,9 @@ export default function HostPage() {
         </>
       )}
 
-      {/* PROMPT PHASE */}
       {phase === "prompt" && (
         <div className="space-y-6">
-          <p className="text-xl text-[#475B5A]">
-            Prompt sent. Waiting for responses…
-          </p>
-
+          <p className="text-xl text-[#475B5A]">Prompt sent. Waiting for responses…</p>
           <button
             onClick={revealResponses}
             className="px-6 py-3 rounded-lg bg-[#F5F5F0] text-[#2F3E46] text-lg shadow border border-[#DDE2D9] hover:bg-[#E8EAE4] transition"
@@ -208,7 +167,6 @@ export default function HostPage() {
         </div>
       )}
 
-      {/* REVEAL PHASE */}
       {phase === "reveal" && (
         <RoundSummary
           prompt={currentPrompt}
@@ -221,13 +179,9 @@ export default function HostPage() {
         />
       )}
 
-      {/* DISCUSSION PHASE */}
       {phase === "discussion" && (
         <div className="space-y-6">
-          <p className="text-xl text-[#475B5A]">
-            Group discussion in progress…
-          </p>
-
+          <p className="text-xl text-[#475B5A]">Group discussion in progress…</p>
           <button
             onClick={sendPrompt}
             className="px-6 py-3 rounded-lg bg-[#A3B18A] text-white text-lg shadow hover:bg-[#588157] transition"
