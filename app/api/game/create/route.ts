@@ -1,21 +1,27 @@
 import { NextResponse } from "next/server"
-import { supabaseServer } from "@/lib/supabaseServer"
+import { createClient } from "@supabase/supabase-js"
 
-export async function POST() {
-  const { data, error } = await supabaseServer
-    .from("games")
+export async function POST(req: Request) {
+  const { gameId, playerId, response } = await req.json()
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  const { error } = await supabase
+    .from("responses")
     .insert({
-      phase: "lobby",
-      prompt: null,
-      current_round: 0,
+      game_id: gameId,
+      player_id: playerId,
+      mind_state: response.mindState,
+      text_response: response.reflection,
     })
-    .select()
-    .single()
 
   if (error) {
-    console.error("Error creating game:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("Supabase insert error:", error)
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ id: data.id })
+  return NextResponse.json({ ok: true })
 }
