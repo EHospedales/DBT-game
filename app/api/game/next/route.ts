@@ -1,9 +1,10 @@
-import { supabase } from "@/app/dbt-game/lib/supabase"
+import { getSupabaseServer } from "@/lib/supabaseServer"
 import { NextResponse } from "next/server"
 
 export async function POST(req: Request) {
   const { gameId, prompt } = await req.json()
 
+  const supabase = getSupabaseServer()
   // increment round first
   await supabase.rpc("increment_round", { game_id: gameId })
 

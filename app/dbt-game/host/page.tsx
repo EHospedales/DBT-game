@@ -40,7 +40,7 @@ export default function HostPage() {
         schema: "public",
         table: "players",
         filter: `game_id=eq.${gameId}`,
-      }, (payload) => {
+      }, (payload: any) => {
         setPlayers((prev) => [...prev, payload.new])
       })
       .subscribe()
@@ -60,7 +60,7 @@ export default function HostPage() {
         schema: "public",
         table: "responses",
         filter: `game_id=eq.${gameId}`,
-      }, (payload) => {
+      }, (payload: any) => {
         setResponses((prev) => [...prev, payload.new])
       })
       .subscribe()
@@ -80,7 +80,7 @@ export default function HostPage() {
         schema: "public",
         table: "games",
         filter: `id=eq.${gameId}`,
-      }, (payload) => {
+      }, (payload: any) => {
         setPhase(payload.new.phase)
       })
       .subscribe()
