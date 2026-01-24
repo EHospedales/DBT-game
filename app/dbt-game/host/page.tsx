@@ -20,14 +20,17 @@ export default function HostPage() {
   const [round, setRound] = useState(0)
   const [phase, setPhase] = useState<"lobby" | "prompt" | "reveal" | "discussion">("lobby")
   const [currentPrompt, setCurrentPrompt] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function createGame() {
       try {
         const res = await fetch("/api/game/create", { method: "POST" })
         if (!res.ok) {
-          const error = await res.text()
-          console.error("Failed to create game:", error)
+          const errorData = await res.json().catch(() => ({ error: res.statusText }))
+          const errorMessage = errorData?.error || `Failed to create game: ${res.status}`
+          console.error("Failed to create game:", errorMessage)
+          setError(errorMessage)
           return
         }
         const data = await res.json()
@@ -35,9 +38,12 @@ export default function HostPage() {
           setGameId(data.id)
         } else {
           console.error("No game ID in response:", data)
+          setError("No game ID returned from server")
         }
       } catch (err) {
-        console.error("Error creating game:", err)
+        const errorMessage = err instanceof Error ? err.message : String(err)
+        console.error("Error creating game:", errorMessage)
+        setError(errorMessage)
       }
     }
     createGame()
@@ -132,7 +138,27 @@ export default function HostPage() {
   }
 
   if (!gameId) {
-    return <p className="p-10 text-[#475B5A]">Creating game…</p>
+    return (
+      <div className="p-10 min-h-screen bg-[#FAFAF7]">
+        {error ? (
+          <div className="max-w-md mx-auto space-y-4">
+            <p className="text-lg font-semibold text-red-600">Error creating game</p>
+            <p className="text-[#475B5A]">{error}</p>
+            <button
+              onClick={() => {
+                setError(null)
+                window.location.reload()
+              }}
+              className="px-6 py-3 rounded-lg bg-[#A3B18A] text-white text-lg shadow hover:bg-[#588157] transition"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : (
+          <p className="text-[#475B5A]">Creating game…</p>
+        )}
+      </div>
+    )
   }
 
   return (

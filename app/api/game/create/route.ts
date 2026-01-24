@@ -29,10 +29,12 @@ export async function POST(req: Request) {
       )
     }
 
-    return NextResponse.json({ id: data.id })
+    return NextResponse.json({ id: data.id, ok: true })
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err)
     console.error("Create game error:", errorMessage)
+    console.error("Environment check - NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "set" : "MISSING")
+    console.error("Environment check - SUPABASE_SERVICE_ROLE_KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "set" : "MISSING")
     return NextResponse.json(
       { ok: false, error: errorMessage },
       { status: 500 }
