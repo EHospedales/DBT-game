@@ -12,6 +12,43 @@ export default function WaitingContent() {
   const [players, setPlayers] = useState<any[]>([])
   const [phase, setPhase] = useState("lobby")
 
+  // Fetch existing players on mount
+  useEffect(() => {
+    if (!gameId) return
+
+    async function loadPlayers() {
+      const { data } = await supabase
+        .from("players")
+        .select("*")
+        .eq("game_id", gameId)
+
+      if (data) {
+        setPlayers(data)
+      }
+    }
+
+    loadPlayers()
+  }, [gameId])
+
+  // Fetch initial game phase
+  useEffect(() => {
+    if (!gameId) return
+
+    async function loadPhase() {
+      const { data } = await supabase
+        .from("games")
+        .select("phase")
+        .eq("id", gameId)
+        .single()
+
+      if (data?.phase) {
+        setPhase(data.phase)
+      }
+    }
+
+    loadPhase()
+  }, [gameId])
+
   // Subscribe to players joining
   useEffect(() => {
     if (!gameId) return
@@ -30,7 +67,9 @@ export default function WaitingContent() {
           setPlayers((prev) => [...prev, payload.new])
         }
       )
-      .subscribe()
+      .subscribe((status: any) => {
+        console.log("Players subscription status:", status)
+      })
 
     return () => {
       void supabase.removeChannel(channel)
@@ -42,7 +81,7 @@ export default function WaitingContent() {
     if (!gameId) return
 
     const channel = supabase
-      .channel(`phase:${gameId}`)
+      .channel(`games:phase:${gameId}`)
       .on(
         "postgres_changes",
         {
@@ -52,10 +91,13 @@ export default function WaitingContent() {
           filter: `id=eq.${gameId}`,
         },
         (payload: any) => {
+          console.log("Game update received:", payload.new)
           setPhase(payload.new.phase)
         }
       )
-      .subscribe()
+      .subscribe((status: any) => {
+        console.log("Game subscription status:", status)
+      })
 
     return () => {
       void supabase.removeChannel(channel)
@@ -64,10 +106,36 @@ export default function WaitingContent() {
 
   // When host starts the game → redirect to play page
   useEffect(() => {
+    console.log("Phase updated to:", phase)
     if (phase === "prompt") {
+      console.log("Redirecting to play page...")
       window.location.href = `/dbt-game/play?game=${gameId}&player=${playerId}`
     }
   }, [phase, gameId, playerId])
+
+  // Poll for phase changes as a fallback
+  useEffect(() => {
+    if (!gameId || phase === "prompt") return
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data } = await supabase
+          .from("games")
+          .select("phase")
+          .eq("id", gameId)
+          .single()
+
+        if (data?.phase === "prompt") {
+          console.log("Poll detected phase change to prompt")
+          setPhase("prompt")
+        }
+      } catch (err) {
+        console.error("Error polling for phase:", err)
+      }
+    }, 2000) // Poll every 2 seconds
+
+    return () => clearInterval(pollInterval)
+  }, [gameId, phase])
 
   return (
     <div className="min-h-screen p-10 space-y-6 text-center bg-[#FAFAF7]">

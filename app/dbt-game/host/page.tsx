@@ -114,15 +114,27 @@ export default function HostPage() {
 
     const prompt = SAMPLE_PROMPTS[round % SAMPLE_PROMPTS.length]
 
-    await fetch("/api/game/next", {
-      method: "POST",
-      body: JSON.stringify({ gameId, prompt }),
-    })
+    try {
+      const res = await fetch("/api/game/next", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId, prompt }),
+      })
 
-    setCurrentPrompt(prompt)
-    setResponses([])
-    setRound((r) => r + 1)
-    setPhase("prompt")
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: res.statusText }))
+        console.error("API error:", errorData)
+        return
+      }
+
+      console.log("Prompt sent successfully:", prompt)
+      setCurrentPrompt(prompt)
+      setResponses([])
+      setRound((r) => r + 1)
+      setPhase("prompt")
+    } catch (err) {
+      console.error("Error sending prompt:", err)
+    }
   }
 
   async function revealResponses() {

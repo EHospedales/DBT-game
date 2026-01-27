@@ -45,18 +45,24 @@ export default function PlayContent() {
     async function loadPrompt() {
       if (!gameId) return
 
-      const { data } = await supabase
-        .from("games")
-        .select("prompt, phase")
-        .eq("id", gameId)
-        .single()
+      try {
+        const { data } = await supabase
+          .from("games")
+          .select("prompt, phase")
+          .eq("id", gameId)
+          .single()
 
-      if (data?.prompt) {
-        setPrompt(data.prompt)
-      }
+        if (data?.prompt) {
+          console.log("Loaded prompt:", data.prompt)
+          setPrompt(data.prompt)
+        }
 
-      if (data?.phase) {
-        setPhase(data.phase)
+        if (data?.phase) {
+          console.log("Loaded phase:", data.phase)
+          setPhase(data.phase)
+        }
+      } catch (err) {
+        console.error("Error loading game state:", err)
       }
     }
 
@@ -141,7 +147,7 @@ export default function PlayContent() {
     }
   }, [gameId, phase])
 
-  // Prompt subscription (future prompts)
+  // Combined subscription for game state updates (prompt and phase)
   useEffect(() => {
     if (!gameId) return
 
@@ -156,40 +162,27 @@ export default function PlayContent() {
           filter: `id=eq.${gameId}`,
         },
         (payload: any) => {
-          setShowBreathing(true)
-          setPrompt(payload.new.prompt)
-          setSelected(null)
-          setShowInput(false)
-          setReflection("")
-          setResponses([])
+          console.log("Game state update received:", payload.new)
+          
+          // Handle prompt updates
+          if (payload.new.prompt !== undefined) {
+            setShowBreathing(true)
+            setPrompt(payload.new.prompt)
+            setSelected(null)
+            setShowInput(false)
+            setReflection("")
+            setResponses([])
+          }
+          
+          // Handle phase updates
+          if (payload.new.phase !== undefined) {
+            setPhase(payload.new.phase)
+          }
         }
       )
-      .subscribe()
-
-    return () => {
-      void supabase.removeChannel(channel)
-    }
-  }, [gameId])
-
-  // Phase subscription
-  useEffect(() => {
-    if (!gameId) return
-
-    const channel = supabase
-      .channel(`phase:${gameId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "games",
-          filter: `id=eq.${gameId}`,
-        },
-        (payload: any) => {
-          setPhase(payload.new.phase)
-        }
-      )
-      .subscribe()
+      .subscribe((status: any) => {
+        console.log("Game subscription status:", status)
+      })
 
     return () => {
       void supabase.removeChannel(channel)
