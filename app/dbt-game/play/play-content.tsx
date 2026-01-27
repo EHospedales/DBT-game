@@ -7,6 +7,7 @@ import { PromptCard } from "../components/PromptCard"
 import { SkillCard } from "../components/SkillCard"
 import { Timer } from "../components/Timer"
 import { BreathingTransition } from "../components/BreathingTransition"
+import { RoundSummary } from "../components/RoundSummary"
 
 export default function PlayContent() {
   const params = useSearchParams()
@@ -19,6 +20,8 @@ export default function PlayContent() {
   const [showInput, setShowInput] = useState(false)
   const [phase, setPhase] = useState<"prompt" | "reveal" | "discussion">("prompt")
   const [showBreathing, setShowBreathing] = useState(false)
+  const [responses, setResponses] = useState<any[]>([])
+  const [players, setPlayers] = useState<any[]>([])
 
   async function submitResponse() {
     if (!selected || !reflection.trim()) return
@@ -60,6 +63,84 @@ export default function PlayContent() {
     loadPrompt()
   }, [gameId])
 
+  // Fetch players
+  useEffect(() => {
+    if (!gameId) return
+
+    async function loadPlayers() {
+      const { data } = await supabase
+        .from("players")
+        .select("*")
+        .eq("game_id", gameId)
+
+      if (data) {
+        setPlayers(data)
+      }
+    }
+
+    loadPlayers()
+  }, [gameId])
+
+  // Subscribe to player changes
+  useEffect(() => {
+    if (!gameId) return
+
+    const channel = supabase
+      .channel(`players:${gameId}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "players",
+        filter: `game_id=eq.${gameId}`,
+      }, (payload: any) => {
+        setPlayers((prev) => [...prev, payload.new])
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [gameId])
+
+  // Fetch responses for reveal phase
+  useEffect(() => {
+    if (!gameId || phase !== "reveal") return
+
+    async function loadResponses() {
+      const { data } = await supabase
+        .from("responses")
+        .select("*")
+        .eq("game_id", gameId)
+
+      if (data) {
+        setResponses(data)
+      }
+    }
+
+    loadResponses()
+  }, [gameId, phase])
+
+  // Subscribe to response changes during reveal
+  useEffect(() => {
+    if (!gameId || phase !== "reveal") return
+
+    const channel = supabase
+      .channel(`responses:${gameId}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "responses",
+        filter: `game_id=eq.${gameId}`,
+      }, (payload: any) => {
+        setResponses((prev) => [...prev, payload.new])
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [gameId, phase])
+
   // Prompt subscription (future prompts)
   useEffect(() => {
     if (!gameId) return
@@ -80,6 +161,7 @@ export default function PlayContent() {
           setSelected(null)
           setShowInput(false)
           setReflection("")
+          setResponses([])
         }
       )
       .subscribe()
@@ -178,8 +260,25 @@ export default function PlayContent() {
 
       {/* REVEAL PHASE */}
       {phase === "reveal" && (
-        <div className="text-center text-xl text-[#475B5A] fade-in">
-          The host is revealing responses…
+        <div className="fade-in">
+          {responses.length > 0 ? (
+            <RoundSummary
+              prompt={prompt}
+              responses={responses.map((r) => ({
+                id: r.id,
+                player: players.find((p) => p.id === r.player_id)?.name || "Unknown",
+                mindState: r.mind_state,
+                reflection: r.text_response,
+              }))}
+              gameId={gameId || undefined}
+              playerId={playerId || undefined}
+              onNext={() => {}} // Players can't control phase progression
+            />
+          ) : (
+            <div className="text-center text-xl text-[#475B5A]">
+              Waiting for responses…
+            </div>
+          )}
         </div>
       )}
 

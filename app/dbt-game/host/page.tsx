@@ -196,10 +196,39 @@ export default function HostPage() {
 
       {phase === "prompt" && (
         <div className="space-y-6">
-          <p className="text-xl text-[#475B5A]">Prompt sent. Waiting for responses…</p>
+          <div>
+            <p className="text-xl text-[#475B5A]">Prompt sent. Waiting for responses…</p>
+            <p className="text-lg font-semibold text-[#2F3E46] mt-2">
+              {responses.length} / {players.length} responses received
+            </p>
+          </div>
+
+          {responses.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-[#4A3F35]">Incoming Responses:</h3>
+              <div className="space-y-3">
+                {responses.map((r, i) => (
+                  <div
+                    key={i}
+                    className="rounded-lg bg-[#E8D8C4] p-4 shadow-md border-l-4 border-[#A3B18A]"
+                  >
+                    <p className="font-semibold text-[#4A3F35]">
+                      {players.find((p) => p.id === r.player_id)?.name || "Unknown"}
+                    </p>
+                    <p className="text-sm text-[#4A3F35] opacity-75 mt-1">
+                      Mind State: <strong>{r.mind_state}</strong>
+                    </p>
+                    <p className="mt-2 text-[#4A3F35] text-sm">{r.text_response}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button
             onClick={revealResponses}
-            className="px-6 py-3 rounded-lg bg-[#F5F5F0] text-[#2F3E46] text-lg shadow border border-[#DDE2D9] hover:bg-[#E8EAE4] transition"
+            className="px-6 py-3 rounded-lg bg-[#F5F5F0] text-[#2F3E46] text-lg shadow border border-[#DDE2D9] hover:bg-[#E8EAE4] transition disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={responses.length === 0}
           >
             Reveal Responses
           </button>
@@ -210,10 +239,13 @@ export default function HostPage() {
         <RoundSummary
           prompt={currentPrompt}
           responses={responses.map((r) => ({
+            id: r.id,
             player: players.find((p) => p.id === r.player_id)?.name || "Unknown",
             mindState: r.mind_state,
             reflection: r.text_response,
           }))}
+          gameId={gameId || undefined}
+          isHost={true}
           onNext={startDiscussion}
         />
       )}
