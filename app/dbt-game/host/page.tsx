@@ -49,6 +49,29 @@ export default function HostPage() {
     createGame()
   }, [])
 
+  // Fetch existing players on mount
+  useEffect(() => {
+    if (!gameId) return
+
+    async function loadPlayers() {
+      try {
+        const { data } = await supabase
+          .from("players")
+          .select("*")
+          .eq("game_id", gameId)
+
+        if (data) {
+          console.log("Loaded existing players:", data)
+          setPlayers(data)
+        }
+      } catch (err) {
+        console.error("Error loading players:", err)
+      }
+    }
+
+    loadPlayers()
+  }, [gameId])
+
   useEffect(() => {
     if (!gameId) return
 
@@ -60,9 +83,12 @@ export default function HostPage() {
         table: "players",
         filter: `game_id=eq.${gameId}`,
       }, (payload: any) => {
+        console.log("Player joined:", payload.new)
         setPlayers((prev) => [...prev, payload.new])
       })
-      .subscribe()
+      .subscribe((status: any) => {
+        console.log("Players subscription status:", status)
+      })
 
     return () => {
       supabase.removeChannel(channel)
@@ -80,14 +106,40 @@ export default function HostPage() {
         table: "responses",
         filter: `game_id=eq.${gameId}`,
       }, (payload: any) => {
+        console.log("Response received:", payload.new)
         setResponses((prev) => [...prev, payload.new])
       })
-      .subscribe()
+      .subscribe((status: any) => {
+        console.log("Responses subscription status:", status)
+      })
 
     return () => {
       supabase.removeChannel(channel)
     }
   }, [gameId])
+
+  // Fetch existing responses when phase changes to "prompt"
+  useEffect(() => {
+    if (!gameId || phase !== "prompt") return
+
+    async function loadResponses() {
+      try {
+        const { data } = await supabase
+          .from("responses")
+          .select("*")
+          .eq("game_id", gameId)
+
+        if (data) {
+          console.log("Loaded existing responses:", data)
+          setResponses(data)
+        }
+      } catch (err) {
+        console.error("Error loading responses:", err)
+      }
+    }
+
+    loadResponses()
+  }, [gameId, phase])
 
   useEffect(() => {
     if (!gameId) return
@@ -100,9 +152,12 @@ export default function HostPage() {
         table: "games",
         filter: `id=eq.${gameId}`,
       }, (payload: any) => {
+        console.log("Phase update received:", payload.new.phase)
         setPhase(payload.new.phase)
       })
-      .subscribe()
+      .subscribe((status: any) => {
+        console.log("Phase subscription status:", status)
+      })
 
     return () => {
       supabase.removeChannel(channel)
