@@ -11,6 +11,7 @@ export default function WaitingContent() {
 
   const [players, setPlayers] = useState<any[]>([])
   const [phase, setPhase] = useState("lobby")
+  const [mode, setMode] = useState("reflection")
 
   // Fetch existing players on mount
   useEffect(() => {
@@ -30,23 +31,27 @@ export default function WaitingContent() {
     loadPlayers()
   }, [gameId])
 
-  // Fetch initial game phase
+  // Fetch initial game phase and mode
   useEffect(() => {
     if (!gameId) return
 
-    async function loadPhase() {
+    async function loadGameState() {
       const { data } = await supabase
         .from("games")
-        .select("phase")
+        .select("phase, mode")
         .eq("id", gameId)
         .single()
 
       if (data?.phase) {
         setPhase(data.phase)
       }
+
+      if (data?.mode) {
+        setMode(data.mode)
+      }
     }
 
-    loadPhase()
+    loadGameState()
   }, [gameId])
 
   // Subscribe to players joining
@@ -76,7 +81,7 @@ export default function WaitingContent() {
     }
   }, [gameId])
 
-  // Subscribe to phase changes
+  // Subscribe to phase and mode changes
   useEffect(() => {
     if (!gameId) return
 
@@ -92,7 +97,12 @@ export default function WaitingContent() {
         },
         (payload: any) => {
           console.log("Game update received:", payload.new)
-          setPhase(payload.new.phase)
+          if (payload.new.phase !== undefined) {
+            setPhase(payload.new.phase)
+          }
+          if (payload.new.mode !== undefined) {
+            setMode(payload.new.mode)
+          }
         }
       )
       .subscribe((status: any) => {
@@ -107,7 +117,7 @@ export default function WaitingContent() {
   // When host starts the game → redirect to play page
   useEffect(() => {
     console.log("Phase updated to:", phase)
-    if (phase === "prompt") {
+    if (phase === "prompt" || phase === "opposite_action_race") {
       console.log("Redirecting to play page...")
       window.location.href = `/dbt-game/play?game=${gameId}&player=${playerId}`
     }
@@ -115,7 +125,7 @@ export default function WaitingContent() {
 
   // Poll for phase changes as a fallback
   useEffect(() => {
-    if (!gameId || phase === "prompt") return
+    if (!gameId || phase === "prompt" || phase === "opposite_action_race") return
 
     const pollInterval = setInterval(async () => {
       try {
@@ -125,9 +135,9 @@ export default function WaitingContent() {
           .eq("id", gameId)
           .single()
 
-        if (data?.phase === "prompt") {
-          console.log("Poll detected phase change to prompt")
-          setPhase("prompt")
+        if (data?.phase === "prompt" || data?.phase === "opposite_action_race") {
+          console.log("Poll detected phase change to prompt or race")
+          setPhase(data.phase)
         }
       } catch (err) {
         console.error("Error polling for phase:", err)
@@ -146,6 +156,17 @@ export default function WaitingContent() {
       <p className="text-[#475B5A]">
         You're in the room. The host will begin shortly.
       </p>
+
+      {/* Game Mode Indicator */}
+      {mode === "opposite_action_race" && (
+        <div className="text-center p-4 bg-[#A3B18A] text-white rounded-xl max-w-md mx-auto">
+          <div className="text-2xl mb-1">🏃‍♀️</div>
+          <h2 className="text-lg font-bold">Opposite Action Race Mode</h2>
+          <p className="text-sm opacity-90">
+            Get ready for fast-paced emotion challenges!
+          </p>
+        </div>
+      )}
 
       <div className="space-y-2 max-w-sm mx-auto">
         {players.map((p) => (

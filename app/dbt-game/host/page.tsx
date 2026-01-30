@@ -156,11 +156,19 @@ export default function HostPage() {
         table: "games",
         filter: `id=eq.${gameId}`,
       }, (payload: any) => {
-        console.log("Phase update received:", payload.new.phase)
-        setPhase(payload.new.phase)
+        console.log("Game update received:", payload.new)
+        if (payload.new.phase !== undefined) {
+          setPhase(payload.new.phase)
+        }
+        if (payload.new.mode !== undefined) {
+          setMode(payload.new.mode)
+        }
+        if (payload.new.scores !== undefined) {
+          setScores(payload.new.scores)
+        }
       })
       .subscribe((status: any) => {
-        console.log("Phase subscription status:", status)
+        console.log("Game subscription status:", status)
       })
 
     return () => {
