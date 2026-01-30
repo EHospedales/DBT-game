@@ -229,11 +229,19 @@ export default function HostPage() {
 
   const switchToOppositeActionRace = () => {
     setMode("opposite_action_race")
+    // Update database with new mode
+    supabase.from("games").update({
+      mode: "opposite_action_race"
+    }).eq("id", gameId)
     // Keep phase as lobby when selecting mode
   }
 
   const switchToReflection = () => {
     setMode("reflection")
+    // Update database with new mode
+    supabase.from("games").update({
+      mode: "reflection"
+    }).eq("id", gameId)
     setPhase("lobby")
   }
 

@@ -246,7 +246,7 @@ export default function PlayContent() {
     }
   }, [gameId])
 
-  if (!prompt) {
+  if (!prompt && mode !== "opposite_action_race") {
     return (
       <div className="p-10 text-[#475B5A]">
         Waiting for host…
@@ -260,9 +260,25 @@ export default function PlayContent() {
         <BreathingTransition onComplete={() => setShowBreathing(false)} />
       )}
 
-      <div className="fade-in">
-        <PromptCard prompt={prompt} />
-      </div>
+      {/* Game Mode Indicator */}
+      {mode === "opposite_action_race" && (
+        <div className="text-center p-6 bg-[#A3B18A] text-white rounded-xl">
+          <div className="text-3xl mb-2">🏃‍♀️</div>
+          <h2 className="text-xl font-bold">Opposite Action Race Mode</h2>
+          <p className="text-sm opacity-90">
+            {phase === "opposite_action_race" 
+              ? "Race in progress!" 
+              : "Get ready for fast-paced emotion challenges!"
+            }
+          </p>
+        </div>
+      )}
+
+      {prompt && (
+        <div className="fade-in">
+          <PromptCard prompt={prompt} />
+        </div>
+      )}
 
       {/* PROMPT PHASE */}
       {phase === "prompt" && (
@@ -311,7 +327,7 @@ export default function PlayContent() {
       {/* REVEAL PHASE */}
       {phase === "reveal" && (
         <div className="fade-in">
-          {responses.length > 0 ? (
+          {responses.length > 0 && prompt ? (
             <RoundSummary
               prompt={prompt}
               responses={responses.map((r) => ({
