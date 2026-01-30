@@ -26,6 +26,7 @@ export function OppositeActionRaceHost({
     timestamp: number
   }>>([])
   const [winner, setWinner] = useState<string | null>(null)
+  const [expectedParticipants, setExpectedParticipants] = useState(0)
 
   // Start a new race
   const startRace = () => {
@@ -36,6 +37,7 @@ export function OppositeActionRaceHost({
     setTimeLeft(90)
     setResponses([])
     setWinner(null)
+    setExpectedParticipants(players.length) // Store the number of participants at race start
 
     // Update game state with race prompt
     console.log("Updating database with race_prompt:", {
@@ -90,12 +92,19 @@ export function OppositeActionRaceHost({
 
   // Check if all players have submitted and end race early
   useEffect(() => {
-    console.log("Checking early completion: raceActive =", raceActive, "responses.length =", responses.length, "players.length =", players.length)
-    if (raceActive && responses.length === players.length && players.length > 0) {
-      console.log("All players have submitted, ending race early")
+    console.log("Checking early completion:")
+    console.log("- raceActive:", raceActive)
+    console.log("- responses.length:", responses.length)
+    console.log("- expectedParticipants:", expectedParticipants)
+    console.log("- players.length:", players.length)
+    console.log("- players:", players.map(p => ({ id: p.id, name: p.name })))
+    console.log("- responses:", responses.map(r => ({ playerId: r.playerId, action: r.action })))
+
+    if (raceActive && responses.length === expectedParticipants && expectedParticipants > 0) {
+      console.log("All expected participants have submitted, ending race early")
       endRace()
     }
-  }, [responses.length, players.length, raceActive])
+  }, [responses.length, expectedParticipants, raceActive])
 
   // Handle race completion
   const endRace = () => {
@@ -138,9 +147,24 @@ export function OppositeActionRaceHost({
   // Auto-end race when timer reaches 0
   useEffect(() => {
     if (timeLeft === 0 && raceActive) {
+      console.log("Timer reached 0, ending race")
       endRace()
     }
   }, [timeLeft, raceActive])
+
+  // Safety check: end race if it's been active too long
+  useEffect(() => {
+    if (!raceActive) return
+
+    const safetyTimer = setTimeout(() => {
+      console.log("Safety timer triggered, ending race after 95 seconds")
+      if (raceActive) {
+        endRace()
+      }
+    }, 95000) // 95 seconds
+
+    return () => clearTimeout(safetyTimer)
+  }, [raceActive])
 
   // Countdown timer
   useEffect(() => {
