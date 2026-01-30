@@ -266,7 +266,7 @@ export default function PlayContent() {
           <div className="text-3xl mb-2">🏃‍♀️</div>
           <h2 className="text-xl font-bold">Opposite Action Race Mode</h2>
           <p className="text-sm opacity-90">
-            {phase === "opposite_action_race" 
+            {phase === "opposite_action_race" && racePrompt
               ? "Race in progress!" 
               : "Get ready for fast-paced emotion challenges!"
             }
