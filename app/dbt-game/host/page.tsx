@@ -217,6 +217,7 @@ export default function HostPage() {
   }
 
   const handleRaceComplete = (winnerId: string, raceResponses: any[]) => {
+    console.log("handleRaceComplete called with winnerId:", winnerId, "responses:", raceResponses)
     // Award points to winner (only if there's a winner)
     if (winnerId) {
       setScores(prev => ({
@@ -226,6 +227,7 @@ export default function HostPage() {
     }
 
     // Update game state
+    console.log("Updating games table with race_responses:", raceResponses)
     supabase.from("games").update({
       race_winner: winnerId || null,
       race_responses: raceResponses,

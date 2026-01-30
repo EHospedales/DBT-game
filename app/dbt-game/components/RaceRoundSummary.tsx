@@ -26,6 +26,7 @@ export function RaceRoundSummary({
   playerId?: string
   isHost?: boolean
 }) {
+  console.log("RaceRoundSummary rendered with responses:", responses)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [favoritesCounts, setFavoritesCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(false)
@@ -36,8 +37,10 @@ export function RaceRoundSummary({
 
     async function loadFavorites() {
       try {
+        console.log("Loading favorites for gameId:", gameId)
         const res = await fetch(`/api/game/race-favorite?gameId=${gameId}`)
         const data = await res.json()
+        console.log("Favorites data received:", data)
 
         if (data.favorites) {
           // Build counts map
@@ -52,6 +55,8 @@ export function RaceRoundSummary({
             }
           }
 
+          console.log("Setting favorites counts:", counts)
+          console.log("Setting player favorites:", playerFavorites)
           setFavoritesCounts(counts)
           setFavorites(playerFavorites)
         }

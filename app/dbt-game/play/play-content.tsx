@@ -224,7 +224,8 @@ export default function PlayContent() {
           console.log("Game state update received:", payload.new)
           
           // Handle prompt updates
-          if (payload.new.prompt !== undefined) {
+          if (payload.new.prompt !== undefined && payload.new.prompt !== prompt) {
+            console.log("New prompt received, showing breathing transition")
             setShowBreathing(true)
             setPrompt(payload.new.prompt)
             setSelected(null)
@@ -262,6 +263,7 @@ export default function PlayContent() {
           // Handle race responses updates
           if (payload.new.race_responses !== undefined) {
             console.log("Received race_responses update:", payload.new.race_responses)
+            console.log("Race responses length:", payload.new.race_responses?.length || 0)
             setRaceResponses(payload.new.race_responses || [])
           }
 

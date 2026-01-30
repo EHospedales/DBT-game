@@ -102,16 +102,19 @@ export function OppositeActionRaceHost({
 
       if (correctResponse) {
         setWinner(correctResponse.playerId)
+        console.log("Race complete with correct response, calling onRaceComplete with responses:", responses)
         onRaceComplete(correctResponse.playerId, responses)
       } else {
         // No correct answers - first responder wins
         const firstResponse = responses.sort((a, b) => a.timestamp - b.timestamp)[0]
         setWinner(firstResponse.playerId)
+        console.log("Race complete with first response, calling onRaceComplete with responses:", responses)
         onRaceComplete(firstResponse.playerId, responses)
       }
     } else {
       // No responses - no winner
       setWinner(null)
+      console.log("Race complete with no responses, calling onRaceComplete with responses:", responses)
       onRaceComplete("", responses) // Empty string for no winner
     }
 

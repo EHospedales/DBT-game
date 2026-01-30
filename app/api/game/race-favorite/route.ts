@@ -46,7 +46,7 @@ export async function GET(req: Request) {
   try {
     let query = supabase
       .from("race_response_favorites")
-      .select("race_response_id, player_id, count(race_response_id)")
+      .select("race_response_id, player_id")
       .eq("game_id", gameId)
 
     if (playerId) {
