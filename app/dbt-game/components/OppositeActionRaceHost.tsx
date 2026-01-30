@@ -75,8 +75,11 @@ export function OppositeActionRaceHost({
           action: payload.new.action,
           timestamp: payload.new.timestamp
         }
-        console.log("Adding response, new responses array:", [...prev, newResponse])
-        setResponses(prev => [...prev, newResponse])
+        setResponses(prev => {
+          const newArray = [...prev, newResponse]
+          console.log("Adding response, new responses array:", newArray)
+          return newArray
+        })
       })
       .subscribe()
 
