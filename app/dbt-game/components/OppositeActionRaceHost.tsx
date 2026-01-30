@@ -38,6 +38,11 @@ export function OppositeActionRaceHost({
     setWinner(null)
 
     // Update game state with race prompt
+    console.log("Updating database with race_prompt:", {
+      emotion: randomPrompt.emotion,
+      scenario: randomPrompt.scenario,
+      urge: randomPrompt.urge
+    })
     supabase.from("games").update({
       race_prompt: {
         emotion: randomPrompt.emotion,

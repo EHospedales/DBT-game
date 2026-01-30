@@ -252,6 +252,7 @@ export default function PlayContent() {
           // Handle race prompt updates
           if (payload.new.race_prompt !== undefined) {
             console.log("Received race_prompt update:", payload.new.race_prompt)
+            console.log("Setting racePrompt to:", payload.new.race_prompt)
             setRacePrompt(payload.new.race_prompt)
           }
 

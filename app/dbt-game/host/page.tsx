@@ -240,10 +240,14 @@ export default function HostPage() {
   const switchToOppositeActionRace = async () => {
     console.log("Switching to opposite action race mode")
     setMode("opposite_action_race")
-    // Update database with new mode and phase
+    // Update database with new mode and phase, clearing previous race data
     const result = await supabase.from("games").update({
       mode: "opposite_action_race",
-      phase: "opposite_action_race"
+      phase: "opposite_action_race",
+      race_prompt: null,
+      race_winner: null,
+      race_responses: null,
+      race_time_left: null
     }).eq("id", gameId)
     console.log("Database update result:", result)
     setPhase("opposite_action_race")
@@ -462,7 +466,7 @@ export default function HostPage() {
               Back to Lobby
             </button>
             <button
-              onClick={() => setPhase("opposite_action_race")}
+              onClick={switchToOppositeActionRace}
               className="px-6 py-3 rounded-lg bg-[#F5F5F0] text-[#2F3E46] text-lg shadow border border-[#DDE2D9] hover:bg-[#E8EAE4] transition"
             >
               Start Another Race
