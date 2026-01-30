@@ -497,7 +497,7 @@ export default function HostPage() {
             </p>
           </div>
 
-          {racePrompt && raceResponses.length > 0 && (
+          {racePrompt && raceResponses && raceResponses.length > 0 && (
             <RaceRoundSummary
               racePrompt={racePrompt}
               responses={raceResponses}

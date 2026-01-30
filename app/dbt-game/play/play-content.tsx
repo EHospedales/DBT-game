@@ -429,7 +429,6 @@ export default function PlayContent() {
       {/* RACE REVEAL PHASE */}
       {phase === "race_reveal" && racePrompt && (
         <div className="fade-in">
-          {console.log("Rendering RaceRoundSummary with raceResponses:", raceResponses, "racePrompt:", racePrompt)}
           <RaceRoundSummary
             racePrompt={racePrompt}
             responses={raceResponses}
