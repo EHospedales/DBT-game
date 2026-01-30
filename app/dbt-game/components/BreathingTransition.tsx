@@ -11,20 +11,20 @@ export function BreathingTransition({
   onComplete: () => void
   duration?: number
 }) {
-  const [hasCompleted, setHasCompleted] = useState(false)
+  const [isActive, setIsActive] = useState(true)
 
   useEffect(() => {
+    if (!isActive) return
+
     const timer = setTimeout(() => {
       onComplete()
-      setHasCompleted(true)
+      setIsActive(false)
     }, duration)
 
     return () => clearTimeout(timer)
-  }, [duration, onComplete])
+  }, [duration, onComplete, isActive])
 
-  if (hasCompleted) {
-    return null
-  }
+  if (!isActive) return null
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-[#F7F1EB]/90 dark:bg-black/60 z-50 fade-in">

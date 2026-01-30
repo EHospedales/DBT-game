@@ -78,6 +78,14 @@ export function OppositeActionRaceHost({
     }
   }, [gameId, raceActive, players])
 
+  // Check if all players have submitted and end race early
+  useEffect(() => {
+    if (raceActive && responses.length === players.length && players.length > 0) {
+      console.log("All players have submitted, ending race early")
+      endRace()
+    }
+  }, [responses.length, players.length, raceActive])
+
   // Handle race completion
   const endRace = () => {
     setRaceActive(false)

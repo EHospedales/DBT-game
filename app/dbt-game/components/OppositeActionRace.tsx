@@ -124,7 +124,7 @@ export function OppositeActionRace({
         <div className="text-center p-6 bg-green-50 rounded-xl border border-green-200">
           <div className="text-4xl mb-2">✅</div>
           <p className="text-lg font-semibold text-green-800">
-            Action submitted! Waiting for results...
+            Action submitted! Waiting for other players or race to end...
           </p>
         </div>
       )}
