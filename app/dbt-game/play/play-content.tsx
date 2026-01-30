@@ -63,14 +63,23 @@ export default function PlayContent() {
   }
 
   async function submitRaceResponse(action: string) {
-    await fetch("/api/game/race-response", {
-      method: "POST",
-      body: JSON.stringify({
-        gameId,
-        playerId,
-        action,
-      }),
-    })
+    console.log("Submitting race response:", action)
+    try {
+      const response = await fetch("/api/game/race-response", {
+        method: "POST",
+        body: JSON.stringify({
+          gameId,
+          playerId,
+          action,
+        }),
+      })
+      console.log("Race response API result:", response.status, response.ok)
+      if (!response.ok) {
+        console.error("Failed to submit race response")
+      }
+    } catch (error) {
+      console.error("Error submitting race response:", error)
+    }
   }
 
   // ⭐ NEW: Fetch current prompt on load (fixes missing first prompt)
@@ -236,6 +245,7 @@ export default function PlayContent() {
           
           // Handle phase updates
           if (payload.new.phase !== undefined) {
+            console.log("Received phase update:", payload.new.phase)
             setPhase(payload.new.phase)
           }
 
@@ -266,6 +276,7 @@ export default function PlayContent() {
             console.log("Received race_responses update:", payload.new.race_responses)
             console.log("Race responses length:", payload.new.race_responses?.length || 0)
             setRaceResponses(payload.new.race_responses || [])
+            console.log("Set raceResponses to:", payload.new.race_responses || [])
           }
 
           // Handle race time left updates
@@ -418,6 +429,7 @@ export default function PlayContent() {
       {/* RACE REVEAL PHASE */}
       {phase === "race_reveal" && racePrompt && (
         <div className="fade-in">
+          {console.log("Rendering RaceRoundSummary with raceResponses:", raceResponses, "racePrompt:", racePrompt)}
           <RaceRoundSummary
             racePrompt={racePrompt}
             responses={raceResponses}

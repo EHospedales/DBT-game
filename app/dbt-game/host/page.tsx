@@ -8,6 +8,7 @@ import { PlayerList } from "../components/PlayerList"
 import { RoundSummary } from "../components/RoundSummary"
 import { Leaderboard } from "../components/Leaderboard"
 import { OppositeActionRaceHost } from "../components/OppositeActionRaceHost"
+import { RaceRoundSummary } from "../components/RaceRoundSummary"
 
 const SAMPLE_PROMPTS = [
   "Your friend cancels plans last minute. What’s your first internal reaction?",
@@ -25,6 +26,9 @@ export default function HostPage() {
   const [currentPrompt, setCurrentPrompt] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [scores, setScores] = useState<Record<string, number>>({})
+  const [racePrompt, setRacePrompt] = useState<any>(null)
+  const [raceResponses, setRaceResponses] = useState<any[]>([])
+  const [raceWinner, setRaceWinner] = useState<string | null>(null)
 
   useEffect(() => {
     async function createGame() {
@@ -145,6 +149,35 @@ export default function HostPage() {
     loadResponses()
   }, [gameId, phase])
 
+  // Load initial game state including race data
+  useEffect(() => {
+    if (!gameId) return
+
+    async function loadGameState() {
+      try {
+        const { data } = await supabase
+          .from("games")
+          .select("phase, mode, scores, race_prompt, race_responses, race_winner")
+          .eq("id", gameId)
+          .single()
+
+        if (data) {
+          console.log("Loaded initial game state:", data)
+          if (data.phase) setPhase(data.phase)
+          if (data.mode) setMode(data.mode)
+          if (data.scores) setScores(data.scores)
+          if (data.race_prompt) setRacePrompt(data.race_prompt)
+          if (data.race_responses) setRaceResponses(data.race_responses || [])
+          if (data.race_winner !== undefined) setRaceWinner(data.race_winner)
+        }
+      } catch (err) {
+        console.error("Error loading game state:", err)
+      }
+    }
+
+    loadGameState()
+  }, [gameId])
+
   useEffect(() => {
     if (!gameId) return
 
@@ -165,6 +198,15 @@ export default function HostPage() {
         }
         if (payload.new.scores !== undefined) {
           setScores(payload.new.scores)
+        }
+        if (payload.new.race_prompt !== undefined) {
+          setRacePrompt(payload.new.race_prompt)
+        }
+        if (payload.new.race_responses !== undefined) {
+          setRaceResponses(payload.new.race_responses || [])
+        }
+        if (payload.new.race_winner !== undefined) {
+          setRaceWinner(payload.new.race_winner)
         }
       })
       .subscribe((status: any) => {
@@ -240,11 +282,10 @@ export default function HostPage() {
   const switchToOppositeActionRace = async () => {
     console.log("Switching to opposite action race mode")
     setMode("opposite_action_race")
-    // Update database with new mode and phase, clearing previous race data
+    // Update database with new mode and phase, clearing previous race data but keeping race_prompt for results
     const result = await supabase.from("games").update({
       mode: "opposite_action_race",
       phase: "opposite_action_race",
-      race_prompt: null,
       race_winner: null,
       race_responses: null,
       race_time_left: null
@@ -455,6 +496,17 @@ export default function HostPage() {
               Points have been awarded. Ready for the next round?
             </p>
           </div>
+
+          {racePrompt && raceResponses.length > 0 && (
+            <RaceRoundSummary
+              racePrompt={racePrompt}
+              responses={raceResponses}
+              winnerId={raceWinner}
+              gameId={gameId || undefined}
+              playerId={null}
+              isHost={true}
+            />
+          )}
 
           <Leaderboard scores={scores} players={players} />
 

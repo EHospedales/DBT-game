@@ -68,12 +68,14 @@ export function OppositeActionRaceHost({
         table: "race_responses",
         filter: `game_id=eq.${gameId}`,
       }, (payload: any) => {
+        console.log("Received race response INSERT:", payload.new)
         const newResponse = {
           playerId: payload.new.player_id,
           playerName: players.find(p => p.id === payload.new.player_id)?.name || "Unknown",
           action: payload.new.action,
           timestamp: payload.new.timestamp
         }
+        console.log("Adding response, new responses array:", [...prev, newResponse])
         setResponses(prev => [...prev, newResponse])
       })
       .subscribe()
@@ -85,6 +87,7 @@ export function OppositeActionRaceHost({
 
   // Check if all players have submitted and end race early
   useEffect(() => {
+    console.log("Checking early completion: raceActive =", raceActive, "responses.length =", responses.length, "players.length =", players.length)
     if (raceActive && responses.length === players.length && players.length > 0) {
       console.log("All players have submitted, ending race early")
       endRace()

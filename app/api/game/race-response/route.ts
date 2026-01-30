@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 
 export async function POST(req: Request) {
   const { gameId, playerId, action } = await req.json()
+  console.log("Race response API called with:", { gameId, playerId, action })
 
   const supabase = getSupabaseServer()
 
@@ -21,5 +22,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  console.log("Successfully inserted race response")
   return NextResponse.json({ ok: true })
 }
