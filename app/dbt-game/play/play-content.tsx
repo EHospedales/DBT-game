@@ -8,6 +8,7 @@ import { SkillCard } from "../components/SkillCard"
 import { Timer } from "../components/Timer"
 import { BreathingTransition } from "../components/BreathingTransition"
 import { RoundSummary } from "../components/RoundSummary"
+import { RaceRoundSummary } from "../components/RaceRoundSummary"
 import { OppositeActionRace } from "../components/OppositeActionRace"
 import { Leaderboard } from "../components/Leaderboard"
 
@@ -32,6 +33,12 @@ export default function PlayContent() {
     urge: string
   } | null>(null)
   const [raceWinner, setRaceWinner] = useState<string | null>(null)
+  const [raceResponses, setRaceResponses] = useState<Array<{
+    playerId: string
+    playerName: string
+    action: string
+    timestamp: number
+  }>>([])
 
   async function submitResponse() {
     if (!selected || !reflection.trim()) return
@@ -69,7 +76,7 @@ export default function PlayContent() {
       try {
         const { data } = await supabase
           .from("games")
-          .select("prompt, phase, mode, scores, race_prompt, race_winner")
+          .select("prompt, phase, mode, scores, race_prompt, race_winner, race_responses")
           .eq("id", gameId)
           .single()
 
@@ -98,6 +105,11 @@ export default function PlayContent() {
 
         if (data?.race_winner) {
           setRaceWinner(data.race_winner)
+        }
+
+        if (data?.race_responses) {
+          console.log("Loaded race_responses:", data.race_responses)
+          setRaceResponses(data.race_responses)
         }
       } catch (err) {
         console.error("Error loading game state:", err)
@@ -236,6 +248,12 @@ export default function PlayContent() {
           // Handle race winner updates
           if (payload.new.race_winner !== undefined) {
             setRaceWinner(payload.new.race_winner)
+          }
+
+          // Handle race responses updates
+          if (payload.new.race_responses !== undefined) {
+            console.log("Received race_responses update:", payload.new.race_responses)
+            setRaceResponses(payload.new.race_responses || [])
           }
         }
       )
@@ -380,23 +398,21 @@ export default function PlayContent() {
       )}
 
       {/* RACE REVEAL PHASE */}
-      {phase === "race_reveal" && (
-        <div className="space-y-6 fade-in">
-          <div className="text-center">
-            <div className="text-6xl mb-4">🏆</div>
-            <h2 className="text-2xl font-bold text-[#2F3E46] mb-2">
-              Race Complete!
-            </h2>
-            {raceWinner && (
-              <p className="text-lg text-[#475B5A]">
-                Winner: <strong>{players.find(p => p.id === raceWinner)?.name}</strong>
-              </p>
-            )}
+      {phase === "race_reveal" && racePrompt && (
+        <div className="fade-in">
+          <RaceRoundSummary
+            racePrompt={racePrompt}
+            responses={raceResponses}
+            winnerId={raceWinner}
+            gameId={gameId || undefined}
+            playerId={playerId || undefined}
+          />
+
+          <div className="mt-8">
+            <Leaderboard scores={scores} players={players} currentPlayerId={playerId || undefined} />
           </div>
 
-          <Leaderboard scores={scores} players={players} currentPlayerId={playerId || undefined} />
-
-          <div className="text-center text-[#475B5A]">
+          <div className="text-center text-[#475B5A] mt-6">
             Waiting for host to start next round...
           </div>
         </div>

@@ -16,21 +16,35 @@ Get these from your Supabase project settings.
 
 ## Database Schema
 
-The app requires three tables in Supabase:
+The app requires several tables in Supabase:
 
 ### 1. `games` table
 
 ```sql
 CREATE TABLE games (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  phase TEXT DEFAULT 'lobby' CHECK (phase IN ('lobby', 'prompt', 'reveal', 'discussion', 'end')),
+  host_id UUID,
+  phase TEXT DEFAULT 'lobby' CHECK (phase IN ('lobby', 'prompt', 'reveal', 'discussion', 'end', 'opposite_action_race', 'race_reveal')),
+  mode TEXT DEFAULT 'reflection' CHECK (mode IN ('reflection', 'opposite_action_race')),
+  prompt TEXT,
+  scores JSONB DEFAULT '{}',
+  race_prompt JSONB,
+  race_winner UUID,
+  race_responses JSONB,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
 **Columns:**
 - `id` (UUID): Unique game identifier
+- `host_id` (UUID): ID of the host player
 - `phase` (TEXT): Current phase of the game
+- `mode` (TEXT): Game mode (reflection or opposite_action_race)
+- `prompt` (TEXT): Current prompt for reflection
+- `scores` (JSONB): Player scores as key-value pairs
+- `race_prompt` (JSONB): Current race prompt with emotion, scenario, urge
+- `race_winner` (UUID): ID of the race winner
+- `race_responses` (JSONB): Array of race responses
 - `created_at` (TIMESTAMPTZ): When the game was created
 
 ### 2. `players` table
@@ -68,13 +82,74 @@ CREATE INDEX idx_responses_game_id ON responses(game_id);
 CREATE INDEX idx_responses_player_id ON responses(player_id);
 ```
 
+### 4. `race_responses` table
+
+```sql
+CREATE TABLE race_responses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  action TEXT NOT NULL,
+  timestamp BIGINT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_race_responses_game_id ON race_responses(game_id);
+CREATE INDEX idx_race_responses_player_id ON race_responses(player_id);
+```
+
 **Columns:**
 - `id` (UUID): Unique response identifier
 - `game_id` (UUID): Foreign key to the game
 - `player_id` (UUID): Foreign key to the player
-- `mind_state` (TEXT): Which mind state the player selected (Emotion Mind, Reasonable Mind, Wise Mind)
-- `text_response` (TEXT): The player's reflection text
-- `created_at` (TIMESTAMPTZ): When the response was submitted
+- `action` (TEXT): The player's opposite action response
+- `timestamp` (BIGINT): Timestamp when response was submitted
+- `created_at` (TIMESTAMPTZ): When the response was created
+
+### 5. `favorites` table
+
+```sql
+CREATE TABLE favorites (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  response_id UUID NOT NULL REFERENCES responses(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(game_id, player_id, response_id)
+);
+
+CREATE INDEX idx_favorites_game_id ON favorites(game_id);
+CREATE INDEX idx_favorites_response_id ON favorites(response_id);
+```
+
+**Columns:**
+- `id` (UUID): Unique favorite identifier
+- `game_id` (UUID): Foreign key to the game
+- `player_id` (UUID): Foreign key to the player who favorited
+- `response_id` (UUID): Foreign key to the favorited response
+- `created_at` (TIMESTAMPTZ): When the favorite was created
+
+### 6. `race_response_favorites` table
+
+```sql
+CREATE TABLE race_response_favorites (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  race_response_id TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(game_id, player_id, race_response_id)
+);
+
+CREATE INDEX idx_race_response_favorites_game_id ON race_response_favorites(game_id);
+```
+
+**Columns:**
+- `id` (UUID): Unique favorite identifier
+- `game_id` (UUID): Foreign key to the game
+- `player_id` (UUID): Foreign key to the player who favorited
+- `race_response_id` (TEXT): ID of the favorited race response (composite key)
+- `created_at` (TIMESTAMPTZ): When the favorite was created
 
 ## Supabase Configuration
 
