@@ -6,6 +6,8 @@ import { useEffect, useState } from "react"
 import { supabase } from "../lib/supabase"
 import { PlayerList } from "../components/PlayerList"
 import { RoundSummary } from "../components/RoundSummary"
+import { Leaderboard } from "../components/Leaderboard"
+import { OppositeActionRaceHost } from "../components/OppositeActionRaceHost"
 
 const SAMPLE_PROMPTS = [
   "Your friend cancels plans last minute. What’s your first internal reaction?",
@@ -18,9 +20,11 @@ export default function HostPage() {
   const [players, setPlayers] = useState<any[]>([])
   const [responses, setResponses] = useState<any[]>([])
   const [round, setRound] = useState(0)
-  const [phase, setPhase] = useState<"lobby" | "prompt" | "reveal" | "discussion">("lobby")
+  const [phase, setPhase] = useState<"lobby" | "prompt" | "reveal" | "discussion" | "opposite_action_race" | "race_reveal">("lobby")
+  const [mode, setMode] = useState<"reflection" | "opposite_action_race">("reflection")
   const [currentPrompt, setCurrentPrompt] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [scores, setScores] = useState<Record<string, number>>({})
 
   useEffect(() => {
     async function createGame() {
@@ -204,6 +208,33 @@ export default function HostPage() {
     setPhase("discussion")
   }
 
+  const handleRaceComplete = (winnerId: string, raceResponses: any[]) => {
+    // Award points to winner
+    setScores(prev => ({
+      ...prev,
+      [winnerId]: (prev[winnerId] || 0) + 10
+    }))
+
+    // Update game state
+    supabase.from("games").update({
+      race_winner: winnerId,
+      race_responses: raceResponses,
+      phase: "race_reveal"
+    }).eq("id", gameId)
+
+    setPhase("race_reveal")
+  }
+
+  const switchToOppositeActionRace = () => {
+    setMode("opposite_action_race")
+    setPhase("opposite_action_race")
+  }
+
+  const switchToReflection = () => {
+    setMode("reflection")
+    setPhase("lobby")
+  }
+
   if (!gameId) {
     return (
       <div className="p-10 min-h-screen bg-[#FAFAF7]">
@@ -252,12 +283,59 @@ export default function HostPage() {
 
           <PlayerList players={players.map((p) => p.name)} />
 
-          <button
-            onClick={sendPrompt}
-            className="px-6 py-3 rounded-lg bg-[#A3B18A] text-white text-lg shadow hover:bg-[#588157] transition"
-          >
-            Start Game
-          </button>
+          {/* Game Mode Selection */}
+          <div className="bg-[#F5F5F0] rounded-xl p-6 shadow-md border border-[#DDE2D9]">
+            <h3 className="text-lg font-semibold text-[#2F3E46] mb-4">Choose Game Mode:</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={switchToReflection}
+                className={`p-4 rounded-lg border-2 transition ${
+                  mode === "reflection"
+                    ? "border-[#A3B18A] bg-[#A3B18A] text-white"
+                    : "border-[#DDE2D9] bg-white text-[#2F3E46] hover:border-[#A3B18A]"
+                }`}
+              >
+                <div className="text-xl font-semibold mb-2">📝 Reflection</div>
+                <p className="text-sm">
+                  Traditional DBT reflection prompts with group discussion
+                </p>
+              </button>
+
+              <button
+                onClick={switchToOppositeActionRace}
+                className={`p-4 rounded-lg border-2 transition ${
+                  mode === "opposite_action_race"
+                    ? "border-[#A3B18A] bg-[#A3B18A] text-white"
+                    : "border-[#DDE2D9] bg-white text-[#2F3E46] hover:border-[#A3B18A]"
+                }`}
+              >
+                <div className="text-xl font-semibold mb-2">🏃‍♀️ Opposite Action Race</div>
+                <p className="text-sm">
+                  Fast-paced racing to suggest opposite actions for emotions
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* Leaderboard */}
+          <Leaderboard scores={scores} players={players} />
+
+          {mode === "reflection" && (
+            <button
+              onClick={sendPrompt}
+              className="px-6 py-3 rounded-lg bg-[#A3B18A] text-white text-lg shadow hover:bg-[#588157] transition"
+            >
+              Start Reflection Round
+            </button>
+          )}
+
+          {mode === "opposite_action_race" && (
+            <OppositeActionRaceHost
+              gameId={gameId}
+              players={players}
+              onRaceComplete={handleRaceComplete}
+            />
+          )}
         </>
       )}
 

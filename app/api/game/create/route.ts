@@ -9,6 +9,8 @@ export async function POST(req: Request) {
       .from("games")
       .insert({
         phase: "lobby",
+        mode: "reflection",
+        scores: {},
       })
       .select()
       .single()

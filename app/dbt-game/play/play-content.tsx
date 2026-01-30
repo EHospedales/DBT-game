@@ -8,6 +8,8 @@ import { SkillCard } from "../components/SkillCard"
 import { Timer } from "../components/Timer"
 import { BreathingTransition } from "../components/BreathingTransition"
 import { RoundSummary } from "../components/RoundSummary"
+import { OppositeActionRace } from "../components/OppositeActionRace"
+import { Leaderboard } from "../components/Leaderboard"
 
 export default function PlayContent() {
   const params = useSearchParams()
@@ -18,10 +20,18 @@ export default function PlayContent() {
   const [selected, setSelected] = useState<string | null>(null)
   const [reflection, setReflection] = useState("")
   const [showInput, setShowInput] = useState(false)
-  const [phase, setPhase] = useState<"prompt" | "reveal" | "discussion">("prompt")
+  const [phase, setPhase] = useState<"prompt" | "reveal" | "discussion" | "opposite_action_race" | "race_reveal">("prompt")
+  const [mode, setMode] = useState<"reflection" | "opposite_action_race">("reflection")
   const [showBreathing, setShowBreathing] = useState(false)
   const [responses, setResponses] = useState<any[]>([])
   const [players, setPlayers] = useState<any[]>([])
+  const [scores, setScores] = useState<Record<string, number>>({})
+  const [racePrompt, setRacePrompt] = useState<{
+    emotion: string
+    scenario: string
+    urge: string
+  } | null>(null)
+  const [raceWinner, setRaceWinner] = useState<string | null>(null)
 
   async function submitResponse() {
     if (!selected || !reflection.trim()) return
@@ -40,6 +50,17 @@ export default function PlayContent() {
     setReflection("")
   }
 
+  async function submitRaceResponse(action: string) {
+    await fetch("/api/game/race-response", {
+      method: "POST",
+      body: JSON.stringify({
+        gameId,
+        playerId,
+        action,
+      }),
+    })
+  }
+
   // ⭐ NEW: Fetch current prompt on load (fixes missing first prompt)
   useEffect(() => {
     async function loadPrompt() {
@@ -48,7 +69,7 @@ export default function PlayContent() {
       try {
         const { data } = await supabase
           .from("games")
-          .select("prompt, phase")
+          .select("prompt, phase, mode, scores, race_prompt, race_winner")
           .eq("id", gameId)
           .single()
 
@@ -60,6 +81,22 @@ export default function PlayContent() {
         if (data?.phase) {
           console.log("Loaded phase:", data.phase)
           setPhase(data.phase)
+        }
+
+        if (data?.mode) {
+          setMode(data.mode)
+        }
+
+        if (data?.scores) {
+          setScores(data.scores)
+        }
+
+        if (data?.race_prompt) {
+          setRacePrompt(data.race_prompt)
+        }
+
+        if (data?.race_winner) {
+          setRaceWinner(data.race_winner)
         }
       } catch (err) {
         console.error("Error loading game state:", err)
@@ -178,6 +215,26 @@ export default function PlayContent() {
           if (payload.new.phase !== undefined) {
             setPhase(payload.new.phase)
           }
+
+          // Handle mode updates
+          if (payload.new.mode !== undefined) {
+            setMode(payload.new.mode)
+          }
+
+          // Handle scores updates
+          if (payload.new.scores !== undefined) {
+            setScores(payload.new.scores)
+          }
+
+          // Handle race prompt updates
+          if (payload.new.race_prompt !== undefined) {
+            setRacePrompt(payload.new.race_prompt)
+          }
+
+          // Handle race winner updates
+          if (payload.new.race_winner !== undefined) {
+            setRaceWinner(payload.new.race_winner)
+          }
         }
       )
       .subscribe((status: any) => {
@@ -288,6 +345,41 @@ export default function PlayContent() {
               What emotion came up first?  
               What skill might help you regulate or respond effectively?
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* OPPOSITE ACTION RACE PHASE */}
+      {phase === "opposite_action_race" && racePrompt && (
+        <div className="fade-in">
+          <OppositeActionRace
+            gameId={gameId || ""}
+            playerId={playerId || ""}
+            racePrompt={racePrompt}
+            onSubmit={submitRaceResponse}
+          />
+        </div>
+      )}
+
+      {/* RACE REVEAL PHASE */}
+      {phase === "race_reveal" && (
+        <div className="space-y-6 fade-in">
+          <div className="text-center">
+            <div className="text-6xl mb-4">🏆</div>
+            <h2 className="text-2xl font-bold text-[#2F3E46] mb-2">
+              Race Complete!
+            </h2>
+            {raceWinner && (
+              <p className="text-lg text-[#475B5A]">
+                Winner: <strong>{players.find(p => p.id === raceWinner)?.name}</strong>
+              </p>
+            )}
+          </div>
+
+          <Leaderboard scores={scores} players={players} currentPlayerId={playerId || undefined} />
+
+          <div className="text-center text-[#475B5A]">
+            Waiting for host to start next round...
           </div>
         </div>
       )}
