@@ -30,6 +30,7 @@ export function OppositeActionRaceHost({
   // Start a new race
   const startRace = () => {
     const randomPrompt = oppositeActionPrompts[Math.floor(Math.random() * oppositeActionPrompts.length)]
+    console.log("Starting race with prompt:", randomPrompt)
     setCurrentPrompt(randomPrompt)
     setRaceActive(true)
     setTimeLeft(30)
@@ -44,7 +45,9 @@ export function OppositeActionRaceHost({
         urge: randomPrompt.urge
       },
       phase: "opposite_action_race"
-    }).eq("id", gameId)
+    }).eq("id", gameId).then((result: any) => {
+      console.log("Race start database update result:", result)
+    })
   }
 
   // Listen for race responses

@@ -92,6 +92,7 @@ export default function PlayContent() {
         }
 
         if (data?.race_prompt) {
+          console.log("Loaded race_prompt:", data.race_prompt)
           setRacePrompt(data.race_prompt)
         }
 
@@ -228,6 +229,7 @@ export default function PlayContent() {
 
           // Handle race prompt updates
           if (payload.new.race_prompt !== undefined) {
+            console.log("Received race_prompt update:", payload.new.race_prompt)
             setRacePrompt(payload.new.race_prompt)
           }
 

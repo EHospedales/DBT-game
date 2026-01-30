@@ -236,12 +236,14 @@ export default function HostPage() {
   }
 
   const switchToOppositeActionRace = async () => {
+    console.log("Switching to opposite action race mode")
     setMode("opposite_action_race")
     // Update database with new mode and phase
-    await supabase.from("games").update({
+    const result = await supabase.from("games").update({
       mode: "opposite_action_race",
       phase: "opposite_action_race"
     }).eq("id", gameId)
+    console.log("Database update result:", result)
     setPhase("opposite_action_race")
   }
 
