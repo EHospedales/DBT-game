@@ -39,6 +39,7 @@ export default function PlayContent() {
     action: string
     timestamp: number
   }>>([])
+  const [raceTimeLeft, setRaceTimeLeft] = useState<number | null>(null)
 
   async function submitResponse() {
     if (!selected || !reflection.trim()) return
@@ -76,7 +77,7 @@ export default function PlayContent() {
       try {
         const { data } = await supabase
           .from("games")
-          .select("prompt, phase, mode, scores, race_prompt, race_winner, race_responses")
+          .select("prompt, phase, mode, scores, race_prompt, race_winner, race_responses, race_time_left")
           .eq("id", gameId)
           .single()
 
@@ -110,6 +111,10 @@ export default function PlayContent() {
         if (data?.race_responses) {
           console.log("Loaded race_responses:", data.race_responses)
           setRaceResponses(data.race_responses)
+        }
+
+        if (data?.race_time_left !== undefined) {
+          setRaceTimeLeft(data.race_time_left)
         }
       } catch (err) {
         console.error("Error loading game state:", err)
@@ -255,6 +260,11 @@ export default function PlayContent() {
             console.log("Received race_responses update:", payload.new.race_responses)
             setRaceResponses(payload.new.race_responses || [])
           }
+
+          // Handle race time left updates
+          if (payload.new.race_time_left !== undefined) {
+            setRaceTimeLeft(payload.new.race_time_left)
+          }
         }
       )
       .subscribe((status: any) => {
@@ -393,6 +403,7 @@ export default function PlayContent() {
             playerId={playerId || ""}
             racePrompt={racePrompt}
             onSubmit={submitRaceResponse}
+            timeLeft={raceTimeLeft || 30}
           />
         </div>
       )}

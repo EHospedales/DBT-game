@@ -90,7 +90,7 @@ export function OppositeActionRace({
       </div>
 
       {/* Action Input */}
-      {!submitted && !disabled && (
+      {!submitted && !disabled && timeLeft > 0 && (
         <div className="space-y-4">
           <div>
             <label className="block text-lg font-medium text-[#2F3E46] mb-2">
@@ -129,7 +129,16 @@ export function OppositeActionRace({
         </div>
       )}
 
-      {disabled && !submitted && (
+      {timeLeft <= 0 && !submitted && (
+        <div className="text-center p-6 bg-orange-50 rounded-xl border border-orange-200">
+          <div className="text-4xl mb-2">⏰</div>
+          <p className="text-lg font-semibold text-orange-800">
+            Time's up! Waiting for results...
+          </p>
+        </div>
+      )}
+
+      {disabled && !submitted && timeLeft > 0 && (
         <div className="text-center p-6 bg-gray-50 rounded-xl border border-gray-200">
           <div className="text-4xl mb-2">⏱️</div>
           <p className="text-lg font-semibold text-gray-600">

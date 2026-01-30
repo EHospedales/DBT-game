@@ -24,4 +24,5 @@ export type GameState = {
     action: string
     timestamp: number
   }>
+  raceTimeLeft?: number
 }

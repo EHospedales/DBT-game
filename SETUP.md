@@ -31,6 +31,7 @@ CREATE TABLE games (
   race_prompt JSONB,
   race_winner UUID,
   race_responses JSONB,
+  race_time_left INTEGER,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ```
@@ -45,6 +46,7 @@ CREATE TABLE games (
 - `race_prompt` (JSONB): Current race prompt with emotion, scenario, urge
 - `race_winner` (UUID): ID of the race winner
 - `race_responses` (JSONB): Array of race responses
+- `race_time_left` (INTEGER): Seconds remaining in the current race (null when not racing)
 - `created_at` (TIMESTAMPTZ): When the game was created
 
 ### 2. `players` table

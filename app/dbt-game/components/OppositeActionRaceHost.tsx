@@ -44,6 +44,7 @@ export function OppositeActionRaceHost({
         scenario: randomPrompt.scenario,
         urge: randomPrompt.urge
       },
+      race_time_left: 30,
       phase: "opposite_action_race"
     }).eq("id", gameId).then((result: any) => {
       console.log("Race start database update result:", result)
@@ -105,6 +106,11 @@ export function OppositeActionRaceHost({
       setWinner(null)
       onRaceComplete("", responses) // Empty string for no winner
     }
+
+    // Clear race time left
+    supabase.from("games").update({
+      race_time_left: null
+    }).eq("id", gameId)
   }
 
   // Auto-end race when timer reaches 0
@@ -119,11 +125,22 @@ export function OppositeActionRaceHost({
     if (!raceActive || timeLeft <= 0) return
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => prev - 1)
+      setTimeLeft(prev => {
+        const newTime = prev - 1
+        // Update database with current time
+        supabase.from("games").update({
+          race_time_left: newTime
+        }).eq("id", gameId).then((result: any) => {
+          if (result.error) {
+            console.error("Error updating race time:", result.error)
+          }
+        })
+        return newTime
+      })
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [raceActive, timeLeft])
+  }, [raceActive, timeLeft, gameId])
 
   return (
     <div className="space-y-6">
