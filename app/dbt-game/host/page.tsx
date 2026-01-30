@@ -209,15 +209,17 @@ export default function HostPage() {
   }
 
   const handleRaceComplete = (winnerId: string, raceResponses: any[]) => {
-    // Award points to winner
-    setScores(prev => ({
-      ...prev,
-      [winnerId]: (prev[winnerId] || 0) + 10
-    }))
+    // Award points to winner (only if there's a winner)
+    if (winnerId) {
+      setScores(prev => ({
+        ...prev,
+        [winnerId]: (prev[winnerId] || 0) + 10
+      }))
+    }
 
     // Update game state
     supabase.from("games").update({
-      race_winner: winnerId,
+      race_winner: winnerId || null,
       race_responses: raceResponses,
       phase: "race_reveal"
     }).eq("id", gameId)
@@ -227,7 +229,7 @@ export default function HostPage() {
 
   const switchToOppositeActionRace = () => {
     setMode("opposite_action_race")
-    setPhase("opposite_action_race")
+    // Keep phase as lobby when selecting mode
   }
 
   const switchToReflection = () => {
@@ -404,6 +406,47 @@ export default function HostPage() {
           >
             Next Round
           </button>
+        </div>
+      )}
+
+      {phase === "opposite_action_race" && (
+        <div className="space-y-6">
+          <OppositeActionRaceHost
+            gameId={gameId}
+            players={players}
+            onRaceComplete={handleRaceComplete}
+          />
+        </div>
+      )}
+
+      {phase === "race_reveal" && (
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="text-6xl mb-4">🏆</div>
+            <h2 className="text-2xl font-bold text-[#2F3E46] mb-2">
+              Race Complete!
+            </h2>
+            <p className="text-lg text-[#475B5A]">
+              Points have been awarded. Ready for the next round?
+            </p>
+          </div>
+
+          <Leaderboard scores={scores} players={players} />
+
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => setPhase("lobby")}
+              className="px-6 py-3 rounded-lg bg-[#A3B18A] text-white text-lg shadow hover:bg-[#588157] transition"
+            >
+              Back to Lobby
+            </button>
+            <button
+              onClick={() => setPhase("opposite_action_race")}
+              className="px-6 py-3 rounded-lg bg-[#F5F5F0] text-[#2F3E46] text-lg shadow border border-[#DDE2D9] hover:bg-[#E8EAE4] transition"
+            >
+              Start Another Race
+            </button>
+          </div>
         </div>
       )}
     </div>

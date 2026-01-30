@@ -97,6 +97,10 @@ export function OppositeActionRaceHost({
         setWinner(firstResponse.playerId)
         onRaceComplete(firstResponse.playerId, responses)
       }
+    } else {
+      // No responses - no winner
+      setWinner(null)
+      onRaceComplete("", responses) // Empty string for no winner
     }
   }
 
@@ -106,6 +110,17 @@ export function OppositeActionRaceHost({
       endRace()
     }
   }, [timeLeft, raceActive])
+
+  // Countdown timer
+  useEffect(() => {
+    if (!raceActive || timeLeft <= 0) return
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1)
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [raceActive, timeLeft])
 
   return (
     <div className="space-y-6">
