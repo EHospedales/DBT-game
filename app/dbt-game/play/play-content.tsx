@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { supabase } from "../lib/supabase"
 import { PromptCard } from "../components/PromptCard"
@@ -40,6 +40,10 @@ export default function PlayContent() {
     timestamp: number
   }>>([])
   const [raceTimeLeft, setRaceTimeLeft] = useState<number | null>(null)
+
+  const handleBreathingComplete = useCallback(() => {
+    setShowBreathing(false)
+  }, [])
 
   async function submitResponse() {
     if (!selected || !reflection.trim()) return
@@ -287,7 +291,7 @@ export default function PlayContent() {
   return (
     <div className="p-10 space-y-8 bg-[#FAFAF7] min-h-screen">
       {showBreathing && (
-        <BreathingTransition onComplete={() => setShowBreathing(false)} />
+        <BreathingTransition onComplete={handleBreathingComplete} />
       )}
 
       {/* Game Mode Indicator */}
