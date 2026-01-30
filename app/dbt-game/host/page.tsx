@@ -503,7 +503,7 @@ export default function HostPage() {
               responses={raceResponses}
               winnerId={raceWinner}
               gameId={gameId || undefined}
-              playerId={null}
+              playerId={undefined}
               isHost={true}
             />
           )}
