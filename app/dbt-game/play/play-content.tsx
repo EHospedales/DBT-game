@@ -403,7 +403,7 @@ export default function PlayContent() {
             playerId={playerId || ""}
             racePrompt={racePrompt}
             onSubmit={submitRaceResponse}
-            timeLeft={raceTimeLeft || 30}
+            timeLeft={raceTimeLeft || 90}
           />
         </div>
       )}

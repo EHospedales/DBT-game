@@ -22,7 +22,7 @@ export function OppositeActionRace({
   playerId,
   racePrompt,
   onSubmit,
-  timeLeft = 30,
+  timeLeft = 90,
   disabled = false
 }: OppositeActionRaceProps) {
   const [action, setAction] = useState("")

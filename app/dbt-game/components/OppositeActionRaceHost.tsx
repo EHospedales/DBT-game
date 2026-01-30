@@ -18,7 +18,7 @@ export function OppositeActionRaceHost({
 }: OppositeActionRaceHostProps) {
   const [currentPrompt, setCurrentPrompt] = useState<OppositeActionPrompt | null>(null)
   const [raceActive, setRaceActive] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(30)
+  const [timeLeft, setTimeLeft] = useState(90)
   const [responses, setResponses] = useState<Array<{
     playerId: string
     playerName: string
@@ -33,7 +33,7 @@ export function OppositeActionRaceHost({
     console.log("Starting race with prompt:", randomPrompt)
     setCurrentPrompt(randomPrompt)
     setRaceActive(true)
-    setTimeLeft(30)
+    setTimeLeft(90)
     setResponses([])
     setWinner(null)
 
@@ -44,7 +44,7 @@ export function OppositeActionRaceHost({
         scenario: randomPrompt.scenario,
         urge: randomPrompt.urge
       },
-      race_time_left: 30,
+      race_time_left: 90,
       phase: "opposite_action_race"
     }).eq("id", gameId).then((result: any) => {
       console.log("Race start database update result:", result)
