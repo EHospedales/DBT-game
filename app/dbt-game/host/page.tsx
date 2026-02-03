@@ -327,6 +327,7 @@ export default function HostPage() {
     const result = await supabase.from("games").update({
       mode: "opposite_action_race",
       phase: "opposite_action_race",
+      prompt: null,
       race_winner: null,
       race_responses: null,
       race_time_left: null

@@ -495,7 +495,7 @@ export default function PlayContent() {
         </div>
       )}
 
-      {prompt && (
+      {prompt && mode === "reflection" && (
         <div className="fade-in">
           <PromptCard prompt={prompt} />
         </div>
