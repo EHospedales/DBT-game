@@ -116,15 +116,15 @@ export default function HostPage() {
         filter: `game_id=eq.${gameId}`,
       }, (payload: any) => {
         console.log("Response received:", payload.new)
-        console.log("Current round in subscription:", currentRound)
-        console.log("Response round:", payload.new.round)
-        // Only add responses from the current round
-        if (payload.new.round === currentRound) {
-          console.log("Adding response to state")
-          setResponses((prev) => [...prev, payload.new])
-        } else {
-          console.log("Ignoring response from different round")
-        }
+        // Add all responses - we'll filter by round when displaying
+        // This avoids race conditions with currentRound state updates
+        setResponses((prev) => {
+          // Avoid duplicates
+          if (prev.some(r => r.id === payload.new.id)) {
+            return prev
+          }
+          return [...prev, payload.new]
+        })
       })
       .subscribe((status: any) => {
         console.log("Responses subscription status:", status)
@@ -133,11 +133,11 @@ export default function HostPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [gameId, currentRound])
+  }, [gameId])
 
-  // Fetch existing responses when phase changes to "prompt"
+  // Fetch existing responses when phase changes to "prompt" or when round changes
   useEffect(() => {
-    if (!gameId || phase !== "prompt") return
+    if (!gameId) return
 
     async function loadResponses() {
       try {
@@ -145,7 +145,6 @@ export default function HostPage() {
           .from("responses")
           .select("*")
           .eq("game_id", gameId)
-          .eq("round", currentRound)
 
         if (data) {
           console.log("Loaded existing responses:", data)
@@ -157,7 +156,7 @@ export default function HostPage() {
     }
 
     loadResponses()
-  }, [gameId, phase, currentRound])
+  }, [gameId, currentRound])
 
   // Load initial game state including race data
   useEffect(() => {
@@ -482,15 +481,15 @@ export default function HostPage() {
           <div>
             <p className="text-xl text-[#475B5A]">Waiting for responses…</p>
             <p className="text-lg font-semibold text-[#2F3E46] mt-2">
-              {responses.length} / {players.length} responses received
+              {responses.filter(r => r.round === currentRound).length} / {players.length} responses received
             </p>
           </div>
 
-          {responses.length > 0 && (
+          {responses.filter(r => r.round === currentRound).length > 0 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-[#4A3F35]">Incoming Responses:</h3>
               <div className="space-y-3">
-                {responses.map((r, i) => (
+                {responses.filter(r => r.round === currentRound).map((r, i) => (
                   <div
                     key={i}
                     className="rounded-lg bg-[#F5F5F0] p-4 shadow-md border-l-4 border-[#A3B18A]"
@@ -511,7 +510,7 @@ export default function HostPage() {
           <button
             onClick={revealResponses}
             className="px-6 py-3 rounded-lg bg-[#F5F5F0] text-[#2F3E46] text-lg shadow border border-[#DDE2D9] hover:bg-[#E8EAE4] transition disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={responses.length === 0}
+            disabled={responses.filter(r => r.round === currentRound).length === 0}
           >
             Reveal Responses
           </button>
@@ -540,7 +539,7 @@ export default function HostPage() {
         <div className="space-y-6">
           <RoundSummary
             prompt={currentPrompt}
-            responses={responses.map((r) => ({
+            responses={responses.filter(r => r.round === currentRound).map((r) => ({
               id: r.id,
               player: players.find((p) => p.id === r.player_id)?.name || "Unknown",
               mindState: r.mind_state,
