@@ -125,7 +125,9 @@ export function RoundSummary({
                 </p>
 
                 <p className="mt-3 text-[#2F3E46] dark:text-[#E8EAE4] leading-relaxed">
-                </div>
+                  {r.reflection}
+                </p>
+              </div>
 
                 {!isHost && gameId && playerId && (
                   <button
