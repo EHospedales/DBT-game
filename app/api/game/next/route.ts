@@ -8,12 +8,22 @@ export async function POST(req: Request) {
   // increment round first
   await supabase.rpc("increment_round", { game_id: gameId })
 
-  // update prompt + phase
+  // Fetch the updated current_round
+  const { data: gameData } = await supabase
+    .from("games")
+    .select("current_round")
+    .eq("id", gameId)
+    .single()
+
+  const currentRound = gameData?.current_round || 0
+
+  // update prompt + phase + current_round
   const { error } = await supabase
     .from("games")
     .update({
       prompt,
       phase: "prompt",
+      current_round: currentRound,
     })
     .eq("id", gameId)
 
@@ -24,3 +34,4 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ ok: true })
 }
+
