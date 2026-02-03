@@ -243,7 +243,7 @@ export default function PlayContent() {
 
         if (data) {
           setRaceResponses(
-            data.map((r) => ({
+            data.map((r: { player_id: string; action: string; timestamp: number }) => ({
               playerId: r.player_id,
               playerName: players.find((p) => p.id === r.player_id)?.name || "Unknown",
               action: r.action,
