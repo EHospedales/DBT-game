@@ -40,6 +40,7 @@ export default function PlayContent() {
     timestamp: number
   }>>([])
   const [raceTimeLeft, setRaceTimeLeft] = useState<number | null>(null)
+  const [currentRound, setCurrentRound] = useState<number>(0)
 
   const handleBreathingComplete = useCallback(() => {
     setShowBreathing(false)
@@ -90,7 +91,7 @@ export default function PlayContent() {
       try {
         const { data } = await supabase
           .from("games")
-          .select("prompt, phase, mode, scores, race_prompt, race_winner, race_responses, race_time_left")
+          .select("prompt, phase, mode, scores, race_prompt, race_winner, race_responses, race_time_left, current_round")
           .eq("id", gameId)
           .single()
 
@@ -128,6 +129,10 @@ export default function PlayContent() {
 
         if (data?.race_time_left !== undefined) {
           setRaceTimeLeft(data.race_time_left)
+        }
+
+        if (data?.current_round !== undefined) {
+          setCurrentRound(data.current_round)
         }
       } catch (err) {
         console.error("Error loading game state:", err)
@@ -185,6 +190,7 @@ export default function PlayContent() {
         .from("responses")
         .select("*")
         .eq("game_id", gameId)
+        .eq("round", currentRound)
 
       if (data) {
         setResponses(data)
@@ -192,7 +198,7 @@ export default function PlayContent() {
     }
 
     loadResponses()
-  }, [gameId, phase])
+  }, [gameId, phase, currentRound])
 
   // Subscribe to response changes during reveal
   useEffect(() => {
@@ -206,14 +212,17 @@ export default function PlayContent() {
         table: "responses",
         filter: `game_id=eq.${gameId}`,
       }, (payload: any) => {
-        setResponses((prev) => [...prev, payload.new])
+        // Only add responses from the current round
+        if (payload.new.round === currentRound) {
+          setResponses((prev) => [...prev, payload.new])
+        }
       })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [gameId, phase])
+  }, [gameId, phase, currentRound])
 
   // Combined subscription for game state updates (prompt and phase)
   useEffect(() => {
@@ -240,6 +249,14 @@ export default function PlayContent() {
             setSelected(null)
             setShowInput(false)
             setReflection("")
+            setResponses([])
+          }
+
+          // Handle current_round updates
+          if (payload.new.current_round !== undefined) {
+            console.log("Received current_round update:", payload.new.current_round)
+            setCurrentRound(payload.new.current_round)
+            // Clear responses when round changes
             setResponses([])
           }
           

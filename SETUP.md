@@ -75,6 +75,7 @@ CREATE TABLE responses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
   player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  round INTEGER DEFAULT 0,
   mind_state TEXT,
   text_response TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
@@ -82,6 +83,7 @@ CREATE TABLE responses (
 
 CREATE INDEX idx_responses_game_id ON responses(game_id);
 CREATE INDEX idx_responses_player_id ON responses(player_id);
+CREATE INDEX idx_responses_game_round ON responses(game_id, round);
 ```
 
 ### 4. `race_responses` table

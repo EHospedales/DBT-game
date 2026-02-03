@@ -21,6 +21,7 @@ export default function HostPage() {
   const [players, setPlayers] = useState<any[]>([])
   const [responses, setResponses] = useState<any[]>([])
   const [round, setRound] = useState(0)
+  const [currentRound, setCurrentRound] = useState(0)
   const [phase, setPhase] = useState<"lobby" | "prompt" | "reveal" | "discussion" | "opposite_action_race" | "race_reveal">("lobby")
   const [mode, setMode] = useState<"reflection" | "opposite_action_race">("reflection")
   const [currentPrompt, setCurrentPrompt] = useState("")
@@ -115,7 +116,10 @@ export default function HostPage() {
         filter: `game_id=eq.${gameId}`,
       }, (payload: any) => {
         console.log("Response received:", payload.new)
-        setResponses((prev) => [...prev, payload.new])
+        // Only add responses from the current round
+        if (payload.new.round === currentRound) {
+          setResponses((prev) => [...prev, payload.new])
+        }
       })
       .subscribe((status: any) => {
         console.log("Responses subscription status:", status)
@@ -124,7 +128,7 @@ export default function HostPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [gameId])
+  }, [gameId, currentRound])
 
   // Fetch existing responses when phase changes to "prompt"
   useEffect(() => {
@@ -136,6 +140,7 @@ export default function HostPage() {
           .from("responses")
           .select("*")
           .eq("game_id", gameId)
+          .eq("round", currentRound)
 
         if (data) {
           console.log("Loaded existing responses:", data)
@@ -147,7 +152,7 @@ export default function HostPage() {
     }
 
     loadResponses()
-  }, [gameId, phase])
+  }, [gameId, phase, currentRound])
 
   // Load initial game state including race data
   useEffect(() => {
@@ -157,7 +162,7 @@ export default function HostPage() {
       try {
         const { data } = await supabase
           .from("games")
-          .select("phase, mode, scores, race_prompt, race_responses, race_winner")
+          .select("phase, mode, scores, race_prompt, race_responses, race_winner, current_round")
           .eq("id", gameId)
           .single()
 
@@ -169,6 +174,7 @@ export default function HostPage() {
           if (data.race_prompt) setRacePrompt(data.race_prompt)
           if (data.race_responses) setRaceResponses(data.race_responses || [])
           if (data.race_winner !== undefined) setRaceWinner(data.race_winner)
+          if (data.current_round !== undefined) setCurrentRound(data.current_round)
         }
       } catch (err) {
         console.error("Error loading game state:", err)
@@ -207,6 +213,12 @@ export default function HostPage() {
         }
         if (payload.new.race_winner !== undefined) {
           setRaceWinner(payload.new.race_winner)
+        }
+        if (payload.new.current_round !== undefined) {
+          console.log("Received current_round update:", payload.new.current_round)
+          setCurrentRound(payload.new.current_round)
+          // Clear responses when round changes
+          setResponses([])
         }
       })
       .subscribe((status: any) => {

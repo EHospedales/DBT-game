@@ -56,7 +56,7 @@ export function OppositeActionRace({
         </div>
 
         <div className="space-y-4">
-          <div className="bg-white rounded-lg p-4 border border-[#DDE2D9]">
+          <div className="bg-[#E8D8C4] dark:bg-[#3A332E] rounded-lg p-4 border border-[#DDE2D9]">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">
                 {racePrompt.emotion === "Anger" ? "😠" :
@@ -68,14 +68,14 @@ export function OppositeActionRace({
                  racePrompt.emotion === "Guilt" ? "😔" :
                  racePrompt.emotion === "Loneliness" ? "😞" : "😐"}
               </span>
-              <span className="text-xl font-semibold text-[#2F3E46]">
+              <span className="text-xl font-semibold text-[#2F3E46] dark:text-[#E8D8C4]">
                 {racePrompt.emotion}
               </span>
             </div>
-            <p className="text-[#475B5A] mb-3">
+            <p className="text-[#475B5A] dark:text-[#D4B5A0] mb-3">
               <strong>Scenario:</strong> {racePrompt.scenario}
             </p>
-            <p className="text-[#475B5A]">
+            <p className="text-[#475B5A] dark:text-[#D4B5A0]">
               <strong>Typical urge:</strong> {racePrompt.urge}
             </p>
           </div>
@@ -101,7 +101,7 @@ export function OppositeActionRace({
               onChange={(e) => setAction(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type your opposite action here..."
-              className="w-full p-4 rounded-xl border border-[#DDE2D9] bg-white text-[#2F3E46] resize-none"
+              className="w-full p-4 rounded-xl border border-[#DDE2D9] bg-[#E8D8C4] dark:bg-[#3A332E] text-[#2F3E46] dark:text-[#E8D8C4] resize-none"
               rows={3}
               maxLength={200}
             />
