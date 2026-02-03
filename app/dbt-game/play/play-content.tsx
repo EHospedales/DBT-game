@@ -230,19 +230,24 @@ export default function PlayContent() {
 
     async function loadRaceResponses() {
       try {
-        const { data, error } = await supabase
+        const { data: rawData, error } = await supabase
           .from("race_responses")
           .select("player_id, action, timestamp")
           .eq("game_id", gameId)
           .order("timestamp", { ascending: true })
-          .returns<Array<{ player_id: string; action: string; timestamp: number }>>()
 
         if (error) {
           console.error("Error loading race responses:", error)
           return
         }
 
-        if (data) {
+        const data = (rawData || []) as Array<{
+          player_id: string
+          action: string
+          timestamp: number
+        }>
+
+        if (data.length > 0) {
           setRaceResponses(
             data.map((r) => ({
               playerId: r.player_id,
