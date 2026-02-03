@@ -21,7 +21,9 @@ export async function POST(req: Request) {
   const currentRound = gameData?.current_round || 0
   const prompt = gameData?.prompt || ""
 
-  await supabase
+  console.log(`Inserting response for game ${gameId}, player ${playerId}, round ${currentRound}`)
+
+  const { data: insertedData, error: insertError } = await supabase
     .from("responses")
     .insert({
       game_id: gameId,
@@ -31,6 +33,13 @@ export async function POST(req: Request) {
       mind_state: mindState,
       text_response: reflection,
     })
+    .select()
 
-  return NextResponse.json({ ok: true })
+  if (insertError) {
+    console.error("Error inserting response:", insertError)
+    return NextResponse.json({ error: insertError.message }, { status: 500 })
+  }
+
+  console.log("Response inserted successfully:", insertedData)
+  return NextResponse.json({ ok: true, round: currentRound })
 }

@@ -116,9 +116,14 @@ export default function HostPage() {
         filter: `game_id=eq.${gameId}`,
       }, (payload: any) => {
         console.log("Response received:", payload.new)
+        console.log("Current round in subscription:", currentRound)
+        console.log("Response round:", payload.new.round)
         // Only add responses from the current round
         if (payload.new.round === currentRound) {
+          console.log("Adding response to state")
           setResponses((prev) => [...prev, payload.new])
+        } else {
+          console.log("Ignoring response from different round")
         }
       })
       .subscribe((status: any) => {
@@ -248,13 +253,16 @@ export default function HostPage() {
         return
       }
 
-      console.log("Prompt sent successfully:", prompt)
+      const data = await res.json()
+      console.log("Prompt sent successfully:", prompt, "Round:", data.currentRound)
       setCurrentPrompt(prompt)
       setResponses([])
       const newRound = round + 1
       setRound(newRound)
-      // Update currentRound immediately so fetch uses correct round
-      setCurrentRound(newRound)
+      // Use the currentRound returned from the API to ensure sync with database
+      if (data.currentRound !== undefined) {
+        setCurrentRound(data.currentRound)
+      }
       setPhase("prompt")
     } catch (err) {
       console.error("Error sending prompt:", err)
