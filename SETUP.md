@@ -27,6 +27,7 @@ CREATE TABLE games (
   phase TEXT DEFAULT 'lobby' CHECK (phase IN ('lobby', 'prompt', 'reveal', 'discussion', 'end', 'opposite_action_race', 'race_reveal')),
   mode TEXT DEFAULT 'reflection' CHECK (mode IN ('reflection', 'opposite_action_race')),
   prompt TEXT,
+  current_round INTEGER DEFAULT 0,
   scores JSONB DEFAULT '{}',
   race_prompt JSONB,
   race_winner UUID,
@@ -42,6 +43,7 @@ CREATE TABLE games (
 - `phase` (TEXT): Current phase of the game
 - `mode` (TEXT): Game mode (reflection or opposite_action_race)
 - `prompt` (TEXT): Current prompt for reflection
+- `current_round` (INTEGER): Current round number (incremented after each prompt)
 - `scores` (JSONB): Player scores as key-value pairs
 - `race_prompt` (JSONB): Current race prompt with emotion, scenario, urge
 - `race_winner` (UUID): ID of the race winner
@@ -156,11 +158,27 @@ CREATE INDEX idx_race_response_favorites_game_id ON race_response_favorites(game
 - `race_response_id` (TEXT): ID of the favorited race response (composite key)
 - `created_at` (TIMESTAMPTZ): When the favorite was created
 
+## Database Functions
+
+### increment_round Function
+
+```sql
+CREATE OR REPLACE FUNCTION increment_round(game_id UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE games
+  SET current_round = current_round + 1
+  WHERE id = game_id;
+END;
+$$ LANGUAGE plpgsql;
+```
+
 ## Supabase Configuration
 
 1. Enable Row Level Security (RLS) if needed, or allow public access for testing
 2. Make sure the tables are created with the schema above
 3. Verify foreign key constraints are properly set up
+4. Create the `increment_round` function (see Database Functions section above)
 
 ## Running the App
 
