@@ -294,6 +294,32 @@ export default function HostPage() {
     setPhase("race_reveal")
   }
 
+  const revealRaceResults = async () => {
+    if (!gameId) return
+
+    try {
+      const res = await fetch(`/api/game/race-response?gameId=${gameId}`)
+      const data = await res.json()
+
+      if (res.ok && data.responses) {
+        setRaceResponses(data.responses)
+        await supabase
+          .from("games")
+          .update({
+            race_responses: data.responses,
+            phase: "race_reveal",
+          })
+          .eq("id", gameId)
+      } else {
+        await supabase.from("games").update({ phase: "race_reveal" }).eq("id", gameId)
+      }
+
+      setPhase("race_reveal")
+    } catch (err) {
+      console.error("Error revealing race results:", err)
+    }
+  }
+
   const switchToOppositeActionRace = async () => {
     console.log("Switching to opposite action race mode")
     setMode("opposite_action_race")
@@ -504,6 +530,13 @@ export default function HostPage() {
             players={players}
             onRaceComplete={handleRaceComplete}
           />
+
+          <button
+            onClick={revealRaceResults}
+            className="px-6 py-3 rounded-lg bg-[#F5F5F0] text-[#2F3E46] text-lg shadow border border-[#DDE2D9] hover:bg-[#E8EAE4] transition"
+          >
+            Reveal Race Responses
+          </button>
         </div>
       )}
 
