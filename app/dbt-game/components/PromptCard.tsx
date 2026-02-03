@@ -4,8 +4,8 @@ export function PromptCard({
   prompt: string
 }) {
   return (
-    <div className="rounded-2xl p-6 bg-[#E8D8C4] dark:bg-[#3A332E] shadow-md">
-      <p className="text-xl text-[#4A3F35] dark:text-[#E8D8C4] leading-relaxed">
+    <div className="rounded-2xl p-6 bg-[#F5F5F0] dark:bg-[#2A2623] shadow-md border border-[#DDE2D9] dark:border-[#3A332E]">
+      <p className="text-xl text-[#2F3E46] dark:text-[#E8EAE4] leading-relaxed">
         {prompt}
       </p>
     </div>

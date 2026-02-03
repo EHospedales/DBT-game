@@ -166,13 +166,13 @@ export function RaceRoundSummary({
               className={`rounded-xl p-6 shadow-md border ${
                 isWinner
                   ? "bg-yellow-50 border-yellow-200"
-                  : "bg-[#E8D8C4] border-[#DDE2D9]"
+                  : "bg-[#F5F5F0] border-[#DDE2D9]"
               }`}
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <p className="text-lg font-semibold text-[#4A3F35]">
+                    <p className="text-lg font-semibold text-[#2F3E46]">
                       {response.playerName}
                     </p>
                     {isWinner && (
@@ -182,7 +182,7 @@ export function RaceRoundSummary({
                     )}
                   </div>
 
-                  <p className="text-[#4A3F35] leading-relaxed text-lg">
+                  <p className="text-[#2F3E46] leading-relaxed text-lg">
                     {response.action}
                   </p>
                 </div>
@@ -191,7 +191,7 @@ export function RaceRoundSummary({
                   <button
                     onClick={() => toggleFavorite(raceResponseId)}
                     disabled={loading}
-                    className="ml-4 flex flex-col items-center gap-1 p-2 rounded-lg transition hover:bg-[#D4B5A0] disabled:opacity-50"
+                    className="ml-4 flex flex-col items-center gap-1 p-2 rounded-lg transition hover:bg-[#E8EAE4] disabled:opacity-50"
                     title={isFavorited ? "Remove favorite" : "Add to favorites"}
                   >
                     <span className="text-2xl">
@@ -206,9 +206,9 @@ export function RaceRoundSummary({
                 )}
 
                 {isHost && favoriteCount > 0 && (
-                  <div className="ml-4 flex items-center gap-2 p-2 rounded-lg bg-[#D4B5A0]">
+                  <div className="ml-4 flex items-center gap-2 p-2 rounded-lg bg-[#E8EAE4] dark:bg-[#3A332E]">
                     <span className="text-xl">❤️</span>
-                    <span className="text-sm font-semibold text-[#4A3F35]">
+                    <span className="text-sm font-semibold text-[#2F3E46] dark:text-[#E8EAE4]">
                       {favoriteCount}
                     </span>
                   </div>

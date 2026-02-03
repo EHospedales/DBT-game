@@ -99,7 +99,7 @@ export function RoundSummary({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-[#4A3F35] dark:text-[#E8D8C4]">
+      <h2 className="text-2xl font-semibold text-[#2F3E46] dark:text-[#E8EAE4]">
         Responses to: {prompt}
       </h2>
 
@@ -112,28 +112,26 @@ export function RoundSummary({
           return (
             <div
               key={i}
-              className="rounded-xl bg-[#E8D8C4] dark:bg-[#3A332E] p-6 shadow-md"
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <p className="text-lg font-semibold text-[#4A3F35] dark:text-[#E8D8C4]">
-                    {r.player}
-                  </p>
+            className="rounded-xl bg-[#F5F5F0] dark:bg-[#2A2623] p-6 shadow-md border border-[#DDE2D9] dark:border-[#3A332E]"
+          >
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <p className="text-lg font-semibold text-[#2F3E46] dark:text-[#E8EAE4]">
+                  {r.player}
+                </p>
 
-                  <p className="mt-1 text-sm text-[#4A3F35] dark:text-[#E8D8C4] opacity-80">
-                    Mind State: <strong>{r.mindState}</strong>
-                  </p>
+                <p className="mt-1 text-sm text-[#475B5A] dark:text-[#C9D4C7] opacity-80">
+                  Mind State: <strong>{r.mindState}</strong>
+                </p>
 
-                  <p className="mt-3 text-[#4A3F35] dark:text-[#E8D8C4] leading-relaxed">
-                    {r.reflection}
-                  </p>
+                <p className="mt-3 text-[#2F3E46] dark:text-[#E8EAE4] leading-relaxed">
                 </div>
 
                 {!isHost && gameId && playerId && (
                   <button
                     onClick={() => toggleFavorite(responseId)}
                     disabled={loading}
-                    className="ml-4 flex flex-col items-center gap-1 p-2 rounded-lg transition hover:bg-[#D4B5A0] disabled:opacity-50"
+                    className="ml-4 flex flex-col items-center gap-1 p-2 rounded-lg transition hover:bg-[#E8EAE4] disabled:opacity-50"
                     title={isFavorited ? "Remove favorite" : "Add to favorites"}
                   >
                     <span className="text-2xl">
@@ -148,9 +146,9 @@ export function RoundSummary({
                 )}
 
                 {isHost && favoriteCount > 0 && (
-                  <div className="ml-4 flex items-center gap-2 p-2 rounded-lg bg-[#D4B5A0]">
+                  <div className="ml-4 flex items-center gap-2 p-2 rounded-lg bg-[#E8EAE4] dark:bg-[#3A332E]">
                     <span className="text-xl">❤️</span>
-                    <span className="text-sm font-semibold text-[#4A3F35]">
+                    <span className="text-sm font-semibold text-[#2F3E46] dark:text-[#E8EAE4]">
                       {favoriteCount}
                     </span>
                   </div>
@@ -163,7 +161,7 @@ export function RoundSummary({
 
       <button
         onClick={onNext}
-        className="px-6 py-3 rounded-lg bg-[#C9A27C] text-white text-lg shadow hover:opacity-90 transition"
+        className="px-6 py-3 rounded-lg bg-[#A3B18A] text-white text-lg shadow hover:bg-[#588157] transition"
       >
         Continue to Discussion
       </button>

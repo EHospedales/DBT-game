@@ -13,7 +13,7 @@ export function Timer({ seconds }: { seconds: number }) {
   }, [])
 
   return (
-    <div className="text-center text-sm text-[#6B5C52] dark:text-[#B8A89A]">
+    <div className="text-center text-sm text-[#475B5A] dark:text-[#C9D4C7]">
       {time}s remaining
     </div>
   )

@@ -424,9 +424,9 @@ export default function HostPage() {
 
       {phase === "prompt" && (
         <div className="space-y-6">
-          <div className="rounded-2xl p-6 bg-[#E8D8C4] shadow-md border-l-4 border-[#A3B18A]">
-            <p className="text-sm font-semibold text-[#4A3F35] uppercase tracking-wide">Current Prompt</p>
-            <p className="text-xl text-[#4A3F35] leading-relaxed mt-3">
+          <div className="rounded-2xl p-6 bg-[#F5F5F0] shadow-md border-l-4 border-[#A3B18A]">
+            <p className="text-sm font-semibold text-[#2F3E46] uppercase tracking-wide">Current Prompt</p>
+            <p className="text-xl text-[#2F3E46] leading-relaxed mt-3">
               {currentPrompt}
             </p>
           </div>
@@ -445,15 +445,15 @@ export default function HostPage() {
                 {responses.map((r, i) => (
                   <div
                     key={i}
-                    className="rounded-lg bg-[#E8D8C4] p-4 shadow-md border-l-4 border-[#A3B18A]"
+                    className="rounded-lg bg-[#F5F5F0] p-4 shadow-md border-l-4 border-[#A3B18A]"
                   >
-                    <p className="font-semibold text-[#4A3F35]">
+                    <p className="font-semibold text-[#2F3E46]">
                       {players.find((p) => p.id === r.player_id)?.name || "Unknown"}
                     </p>
-                    <p className="text-sm text-[#4A3F35] opacity-75 mt-1">
+                    <p className="text-sm text-[#2F3E46] opacity-75 mt-1">
                       Mind State: <strong>{r.mind_state}</strong>
                     </p>
-                    <p className="mt-2 text-[#4A3F35] text-sm">{r.text_response}</p>
+                    <p className="mt-2 text-[#2F3E46] text-sm">{r.text_response}</p>
                   </div>
                 ))}
               </div>

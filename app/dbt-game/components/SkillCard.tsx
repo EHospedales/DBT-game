@@ -20,18 +20,18 @@ export function SkillCard({
       onClick={onClick}
       className={cn(
         "w-full text-left rounded-xl p-5 transition-all",
-        "bg-[#F7F1EB] dark:bg-[#2A2623]",
-        "shadow-sm hover:shadow-md",
-        "border border-[#E8D8C4] dark:border-[#3A332E]",
-        selected && "ring-2 ring-[#C9A27C]",
+        "bg-[#F5F5F0] dark:bg-[#2A2623]",
+        "shadow-sm hover:shadow-md hover:border-[#A3B18A]",
+        "border border-[#DDE2D9] dark:border-[#3A332E]",
+        selected && "ring-2 ring-[#A3B18A] bg-[#F0F7E8]",
         className
       )}
     >
-      <h3 className="text-lg font-semibold text-[#4A3F35] dark:text-[#E8D8C4]">
+      <h3 className="text-lg font-semibold text-[#2F3E46] dark:text-[#E8EAE4]">
         {title}
       </h3>
       {description && (
-        <p className="mt-2 text-sm text-[#6B5C52] dark:text-[#B8A89A]">
+        <p className="mt-2 text-sm text-[#475B5A] dark:text-[#C9D4C7]">
           {description}
         </p>
       )}
