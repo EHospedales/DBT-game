@@ -224,6 +224,81 @@ export default function PlayContent() {
     }
   }, [gameId, phase, currentRound])
 
+  // Load race responses during the race (so players can see them after submitting)
+  useEffect(() => {
+    if (!gameId || phase !== "opposite_action_race") return
+
+    async function loadRaceResponses() {
+      try {
+        const res = await fetch(`/api/game/race-response?gameId=${gameId}`)
+        if (!res.ok) {
+          console.error("Error loading race responses:", res.statusText)
+          return
+        }
+
+        const payload = await res.json()
+        const data = (payload.responses || []) as Array<{
+          player_id: string
+          action: string
+          timestamp: number
+        }>
+
+        setRaceResponses(
+          data.map((r) => ({
+            playerId: r.player_id,
+            playerName: players.find((p) => p.id === r.player_id)?.name || "Unknown",
+            action: r.action,
+            timestamp: r.timestamp,
+          }))
+        )
+      } catch (err) {
+        console.error("Error loading race responses:", err)
+      }
+    }
+
+    loadRaceResponses()
+  }, [gameId, phase, players])
+
+  // Subscribe to race responses during the race
+  useEffect(() => {
+    if (!gameId || phase !== "opposite_action_race") return
+
+    const channel = supabase
+      .channel(`race_responses:${gameId}:race`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "race_responses",
+          filter: `game_id=eq.${gameId}`,
+        },
+        (payload: any) => {
+          const playerName = players.find((p) => p.id === payload.new.player_id)?.name || "Unknown"
+          setRaceResponses((prev) => {
+            const exists = prev.some(
+              (r) => r.playerId === payload.new.player_id && r.timestamp === payload.new.timestamp
+            )
+            if (exists) return prev
+            return [
+              ...prev,
+              {
+                playerId: payload.new.player_id,
+                playerName,
+                action: payload.new.action,
+                timestamp: payload.new.timestamp,
+              },
+            ]
+          })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [gameId, phase, players])
+
   // Load race responses for players during race reveal (fallback to table data)
   useEffect(() => {
     if (!gameId || phase !== "race_reveal") return
@@ -520,6 +595,7 @@ export default function PlayContent() {
             racePrompt={racePrompt}
             onSubmit={submitRaceResponse}
             timeLeft={raceTimeLeft || 90}
+            responses={raceResponses}
           />
         </div>
       )}
