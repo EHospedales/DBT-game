@@ -235,6 +235,7 @@ export default function PlayContent() {
           .select("player_id, action, timestamp")
           .eq("game_id", gameId)
           .order("timestamp", { ascending: true })
+          .returns<Array<{ player_id: string; action: string; timestamp: number }>>()
 
         if (error) {
           console.error("Error loading race responses:", error)
@@ -243,7 +244,7 @@ export default function PlayContent() {
 
         if (data) {
           setRaceResponses(
-            data.map((r: { player_id: string; action: string; timestamp: number }) => ({
+            data.map((r) => ({
               playerId: r.player_id,
               playerName: players.find((p) => p.id === r.player_id)?.name || "Unknown",
               action: r.action,
