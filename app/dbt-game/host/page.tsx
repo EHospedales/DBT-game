@@ -421,8 +421,15 @@ export default function HostPage() {
 
       {phase === "prompt" && (
         <div className="space-y-6">
+          <div className="rounded-2xl p-6 bg-[#E8D8C4] shadow-md border-l-4 border-[#A3B18A]">
+            <p className="text-sm font-semibold text-[#4A3F35] uppercase tracking-wide">Current Prompt</p>
+            <p className="text-xl text-[#4A3F35] leading-relaxed mt-3">
+              {currentPrompt}
+            </p>
+          </div>
+
           <div>
-            <p className="text-xl text-[#475B5A]">Prompt sent. Waiting for responses…</p>
+            <p className="text-xl text-[#475B5A]">Waiting for responses…</p>
             <p className="text-lg font-semibold text-[#2F3E46] mt-2">
               {responses.length} / {players.length} responses received
             </p>

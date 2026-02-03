@@ -76,6 +76,7 @@ CREATE TABLE responses (
   game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
   player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
   round INTEGER DEFAULT 0,
+  prompt TEXT,
   mind_state TEXT,
   text_response TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
