@@ -457,6 +457,19 @@ export default function HostPage() {
             </p>
           </div>
 
+          <div className="rounded-2xl p-6 bg-white shadow-md border border-[#DDE2D9] space-y-3">
+            <p className="text-sm font-semibold text-[#2F3E46] uppercase tracking-wide">Host DBT Cues</p>
+            <ul className="list-disc pl-5 text-[#475B5A] space-y-1">
+              <li>“What emotion showed up first in your body?” (Emotion awareness)</li>
+              <li>“Which mind state was strongest: Emotion, Reasonable, or Wise?” (Mind states)</li>
+              <li>“What was the urge—and what would be an effective response?” (Check the facts)</li>
+              <li>“What skill could you use for regulation right now?” (Skill selection)</li>
+              <li>“What would opposite action look like in this moment?” (Opposite action)</li>
+              <li>“What would help you pause before reacting?” (Distress tolerance)</li>
+              <li>“What value do you want to act from here?” (Wise mind)</li>
+            </ul>
+          </div>
+
           <div>
             <p className="text-xl text-[#475B5A]">Waiting for responses…</p>
             <p className="text-lg font-semibold text-[#2F3E46] mt-2">
@@ -493,32 +506,97 @@ export default function HostPage() {
           >
             Reveal Responses
           </button>
+
+          <button
+            onClick={async () => {
+              if (!gameId) return
+              await supabase
+                .from("games")
+                .update({
+                  phase: "lobby",
+                  mode: "reflection",
+                  prompt: null,
+                })
+                .eq("id", gameId)
+              setPhase("lobby")
+            }}
+            className="px-6 py-3 rounded-lg bg-[#A3B18A] text-white text-lg shadow hover:bg-[#588157] transition"
+          >
+            Back to Lobby
+          </button>
         </div>
       )}
 
       {phase === "reveal" && (
-        <RoundSummary
-          prompt={currentPrompt}
-          responses={responses.map((r) => ({
-            id: r.id,
-            player: players.find((p) => p.id === r.player_id)?.name || "Unknown",
-            mindState: r.mind_state,
-            reflection: r.text_response,
-          }))}
-          gameId={gameId || undefined}
-          isHost={true}
-          onNext={startDiscussion}
-        />
+        <div className="space-y-6">
+          <RoundSummary
+            prompt={currentPrompt}
+            responses={responses.map((r) => ({
+              id: r.id,
+              player: players.find((p) => p.id === r.player_id)?.name || "Unknown",
+              mindState: r.mind_state,
+              reflection: r.text_response,
+            }))}
+            gameId={gameId || undefined}
+            isHost={true}
+            onNext={startDiscussion}
+          />
+
+          <button
+            onClick={async () => {
+              if (!gameId) return
+              await supabase
+                .from("games")
+                .update({
+                  phase: "lobby",
+                  mode: "reflection",
+                  prompt: null,
+                })
+                .eq("id", gameId)
+              setPhase("lobby")
+            }}
+            className="px-6 py-3 rounded-lg bg-[#A3B18A] text-white text-lg shadow hover:bg-[#588157] transition"
+          >
+            Back to Lobby
+          </button>
+        </div>
       )}
 
       {phase === "discussion" && (
         <div className="space-y-6">
           <p className="text-xl text-[#475B5A]">Group discussion in progress…</p>
+          <div className="rounded-2xl p-6 bg-white shadow-md border border-[#DDE2D9] space-y-3">
+            <p className="text-sm font-semibold text-[#2F3E46] uppercase tracking-wide">Discussion Cues</p>
+            <ul className="list-disc pl-5 text-[#475B5A] space-y-1">
+              <li>“What did you notice in your body as you answered?”</li>
+              <li>“What skill felt most accessible—and why?”</li>
+              <li>“What would be a tiny, effective next step?”</li>
+              <li>“How could you validate yourself or someone else here?”</li>
+            </ul>
+          </div>
           <button
             onClick={sendPrompt}
             className="px-6 py-3 rounded-lg bg-[#A3B18A] text-white text-lg shadow hover:bg-[#588157] transition"
           >
             Next Round
+          </button>
+
+          <button
+            onClick={async () => {
+              if (!gameId) return
+              await supabase
+                .from("games")
+                .update({
+                  phase: "lobby",
+                  mode: "reflection",
+                  prompt: null,
+                })
+                .eq("id", gameId)
+              setPhase("lobby")
+            }}
+            className="px-6 py-3 rounded-lg bg-[#F5F5F0] text-[#2F3E46] text-lg shadow border border-[#DDE2D9] hover:bg-[#E8EAE4] transition"
+          >
+            Back to Lobby
           </button>
         </div>
       )}
@@ -567,7 +645,22 @@ export default function HostPage() {
 
           <div className="flex gap-4 justify-center">
             <button
-              onClick={() => setPhase("lobby")}
+              onClick={async () => {
+                if (!gameId) return
+                await supabase
+                  .from("games")
+                  .update({
+                    phase: "lobby",
+                    mode: "reflection",
+                    race_prompt: null,
+                    race_winner: null,
+                    race_responses: null,
+                    race_time_left: null,
+                  })
+                  .eq("id", gameId)
+                setMode("reflection")
+                setPhase("lobby")
+              }}
               className="px-6 py-3 rounded-lg bg-[#A3B18A] text-white text-lg shadow hover:bg-[#588157] transition"
             >
               Back to Lobby
