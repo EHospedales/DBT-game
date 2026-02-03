@@ -224,6 +224,81 @@ export default function PlayContent() {
     }
   }, [gameId, phase, currentRound])
 
+  // Load race responses for players during race reveal (fallback to table data)
+  useEffect(() => {
+    if (!gameId || phase !== "race_reveal") return
+
+    async function loadRaceResponses() {
+      try {
+        const { data, error } = await supabase
+          .from("race_responses")
+          .select("player_id, action, timestamp")
+          .eq("game_id", gameId)
+          .order("timestamp", { ascending: true })
+
+        if (error) {
+          console.error("Error loading race responses:", error)
+          return
+        }
+
+        if (data) {
+          setRaceResponses(
+            data.map((r) => ({
+              playerId: r.player_id,
+              playerName: players.find((p) => p.id === r.player_id)?.name || "Unknown",
+              action: r.action,
+              timestamp: r.timestamp,
+            }))
+          )
+        }
+      } catch (err) {
+        console.error("Error loading race responses:", err)
+      }
+    }
+
+    loadRaceResponses()
+  }, [gameId, phase, players])
+
+  // Subscribe to late race responses during race reveal
+  useEffect(() => {
+    if (!gameId || phase !== "race_reveal") return
+
+    const channel = supabase
+      .channel(`race_responses:${gameId}:reveal`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "race_responses",
+          filter: `game_id=eq.${gameId}`,
+        },
+        (payload: any) => {
+          const playerName = players.find((p) => p.id === payload.new.player_id)?.name || "Unknown"
+          setRaceResponses((prev) => {
+            const exists = prev.some(
+              (r) => r.playerId === payload.new.player_id && r.timestamp === payload.new.timestamp
+            )
+            if (exists) return prev
+            return [
+              ...prev,
+              {
+                playerId: payload.new.player_id,
+                playerName,
+                action: payload.new.action,
+                timestamp: payload.new.timestamp,
+              },
+            ]
+          })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [gameId, phase, players])
+
   // Combined subscription for game state updates (prompt and phase)
   useEffect(() => {
     if (!gameId) return
