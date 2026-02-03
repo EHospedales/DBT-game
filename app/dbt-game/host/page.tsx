@@ -251,7 +251,10 @@ export default function HostPage() {
       console.log("Prompt sent successfully:", prompt)
       setCurrentPrompt(prompt)
       setResponses([])
-      setRound((r) => r + 1)
+      const newRound = round + 1
+      setRound(newRound)
+      // Update currentRound immediately so fetch uses correct round
+      setCurrentRound(newRound)
       setPhase("prompt")
     } catch (err) {
       console.error("Error sending prompt:", err)
