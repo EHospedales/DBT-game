@@ -35,6 +35,11 @@ export function OppositeActionRace({
   const [action, setAction] = useState("")
   const [submitted, setSubmitted] = useState(false)
 
+  useEffect(() => {
+    setSubmitted(false)
+    setAction("")
+  }, [racePrompt.emotion, racePrompt.scenario, racePrompt.urge])
+
   const handleSubmit = () => {
     if (!action.trim() || submitted || disabled) return
 
