@@ -25,3 +25,27 @@ export async function POST(req: Request) {
   console.log("Successfully inserted race response")
   return NextResponse.json({ ok: true })
 }
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const gameId = searchParams.get("gameId")
+
+  if (!gameId) {
+    return NextResponse.json({ error: "Missing gameId" }, { status: 400 })
+  }
+
+  const supabase = getSupabaseServer()
+
+  const { data, error } = await supabase
+    .from("race_responses")
+    .select("player_id, action, timestamp")
+    .eq("game_id", gameId)
+    .order("timestamp", { ascending: true })
+
+  if (error) {
+    console.error("Error fetching race responses:", error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ responses: data || [] })
+}
