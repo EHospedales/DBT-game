@@ -250,10 +250,14 @@ export default function PlayContent() {
             setShowInput(false)
             setReflection("")
             setResponses([])
+            // Update current round when prompt changes
+            if (payload.new.current_round !== undefined) {
+              setCurrentRound(payload.new.current_round)
+            }
           }
 
-          // Handle current_round updates
-          if (payload.new.current_round !== undefined) {
+          // Handle current_round updates (separate updates)
+          if (payload.new.current_round !== undefined && payload.new.prompt === undefined) {
             console.log("Received current_round update:", payload.new.current_round)
             setCurrentRound(payload.new.current_round)
             // Clear responses when round changes
