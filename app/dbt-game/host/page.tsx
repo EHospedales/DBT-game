@@ -280,23 +280,41 @@ export default function HostPage() {
     setPhase("discussion")
   }
 
-  const handleRaceComplete = (winnerId: string, raceResponses: any[]) => {
+  const handleRaceComplete = async (winnerId: string, raceResponses: any[]) => {
     console.log("handleRaceComplete called with winnerId:", winnerId, "responses:", raceResponses)
-    // Award points to winner (only if there's a winner)
-    if (winnerId) {
-      setScores(prev => ({
-        ...prev,
-        [winnerId]: (prev[winnerId] || 0) + 10
-      }))
+    const { data: gameData, error: gameError } = await supabase
+      .from("games")
+      .select("scores")
+      .eq("id", gameId)
+      .single()
+
+    if (gameError) {
+      console.error("Error loading existing scores:", gameError)
+      return
     }
+
+    const currentScores = (gameData?.scores || {}) as Record<string, number>
+    const updatedScores = { ...currentScores }
+
+    if (winnerId) {
+      updatedScores[winnerId] = (updatedScores[winnerId] || 0) + 10
+    }
+
+    setScores(updatedScores)
 
     // Update game state
     console.log("Updating games table with race_responses:", raceResponses)
-    supabase.from("games").update({
+    const { error: updateError } = await supabase.from("games").update({
+      scores: updatedScores,
       race_winner: winnerId || null,
       race_responses: raceResponses,
       phase: "race_reveal"
     }).eq("id", gameId)
+
+    if (updateError) {
+      console.error("Error saving race results:", updateError)
+      return
+    }
 
     setPhase("race_reveal")
   }

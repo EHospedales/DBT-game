@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useMemo, useState } from "react"
+
 interface LeaderboardProps {
   scores: Record<string, number>
   players: Array<{ id: string; name: string }>
@@ -7,12 +9,51 @@ interface LeaderboardProps {
 }
 
 export function Leaderboard({ scores, players, currentPlayerId }: LeaderboardProps) {
+  const [allTimeHearts, setAllTimeHearts] = useState<Record<string, number>>({})
+
+  const playerNames = useMemo(() => {
+    return Array.from(new Set(players.map((player) => player.name).filter(Boolean)))
+  }, [players])
+
+  useEffect(() => {
+    if (playerNames.length === 0) {
+      return
+    }
+
+    let isActive = true
+
+    async function loadAllTimeHearts() {
+      try {
+        const params = new URLSearchParams({
+          playerNames: playerNames.join(","),
+        })
+
+        const res = await fetch(`/api/game/leaderboard-stats?${params.toString()}`)
+        if (!res.ok) return
+
+        const data = await res.json()
+        if (isActive) {
+          setAllTimeHearts(data.stats || {})
+        }
+      } catch (error) {
+        console.error("Error loading leaderboard hearts:", error)
+      }
+    }
+
+    loadAllTimeHearts()
+
+    return () => {
+      isActive = false
+    }
+  }, [playerNames])
+
   // Create sorted leaderboard
   const leaderboard = players
     .map(player => ({
       id: player.id,
       name: player.name,
-      score: scores[player.id] || 0
+      score: scores[player.id] || 0,
+      hearts: allTimeHearts[player.name] || 0,
     }))
     .sort((a, b) => b.score - a.score)
 
@@ -48,10 +89,11 @@ export function Leaderboard({ scores, players, currentPlayerId }: LeaderboardPro
               </span>
             </div>
 
-            <div className={`text-lg font-bold ${
+            <div className={`text-right ${
               player.id === currentPlayerId ? "text-white" : "text-[#2F3E46]"
             }`}>
-              {player.score} pts
+              <div className="text-lg font-bold">{player.score} pts</div>
+              <div className="text-xs font-semibold opacity-90">❤️ {player.hearts} all-time</div>
             </div>
           </div>
         ))}

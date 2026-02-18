@@ -226,3 +226,8 @@ Visit `http://localhost:3000/dbt-game` to access the app.
 ### Responses not showing
 - Verify `responses` table exists with proper foreign keys
 - Check that all required columns exist
+
+### Leaderboard not updating as expected
+- Scores are cumulative per game and persisted in `games.scores`
+- Leaderboard hearts are all-time per player name across all games
+- All-time hearts include both `favorites` and `race_response_favorites`
