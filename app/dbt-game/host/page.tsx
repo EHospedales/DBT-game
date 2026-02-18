@@ -116,10 +116,11 @@ export default function HostPage() {
         filter: `game_id=eq.${gameId}`,
       }, (payload: any) => {
         console.log("Response received:", payload.new)
-        // Add all responses - we'll filter by round when displaying
-        // This avoids race conditions with currentRound state updates
+        if (payload.new.round !== currentRound) {
+          return
+        }
+
         setResponses((prev) => {
-          // Avoid duplicates
           if (prev.some(r => r.id === payload.new.id)) {
             return prev
           }
@@ -133,7 +134,7 @@ export default function HostPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [gameId])
+  }, [gameId, currentRound])
 
   // Fetch existing responses when phase changes to "prompt" or when round changes
   useEffect(() => {
@@ -145,6 +146,7 @@ export default function HostPage() {
           .from("responses")
           .select("*")
           .eq("game_id", gameId)
+          .eq("round", currentRound)
 
         if (data) {
           console.log("Loaded existing responses:", data)

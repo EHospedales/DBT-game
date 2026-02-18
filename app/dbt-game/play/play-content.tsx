@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { supabase } from "../lib/supabase"
 import { PromptCard } from "../components/PromptCard"
@@ -78,7 +78,7 @@ export default function PlayContent() {
   const [selected, setSelected] = useState<string | null>(null)
   const [reflection, setReflection] = useState("")
   const [showInput, setShowInput] = useState(false)
-  const [phase, setPhase] = useState<"prompt" | "reveal" | "discussion" | "opposite_action_race" | "race_reveal">("prompt")
+  const [phase, setPhase] = useState<"lobby" | "prompt" | "reveal" | "discussion" | "opposite_action_race" | "race_reveal">("lobby")
   const [mode, setMode] = useState<"reflection" | "opposite_action_race">("reflection")
   const [showBreathing, setShowBreathing] = useState(false)
   const [responses, setResponses] = useState<any[]>([])
@@ -98,6 +98,11 @@ export default function PlayContent() {
   }>>([])
   const [raceTimeLeft, setRaceTimeLeft] = useState<number | null>(null)
   const [currentRound, setCurrentRound] = useState<number>(0)
+  const latestPromptRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    latestPromptRef.current = prompt
+  }, [prompt])
 
   const handleBreathingComplete = useCallback(() => {
     setShowBreathing(false)
@@ -433,17 +438,29 @@ export default function PlayContent() {
           console.log("Game state update received:", payload.new)
           
           // Handle prompt updates
-          if (payload.new.prompt !== undefined && payload.new.prompt !== prompt) {
-            console.log("New prompt received, showing breathing transition")
-            setShowBreathing(true)
-            setPrompt(payload.new.prompt)
-            setSelected(null)
-            setShowInput(false)
-            setReflection("")
-            setResponses([])
-            // Update current round when prompt changes
-            if (payload.new.current_round !== undefined) {
-              setCurrentRound(payload.new.current_round)
+          if (payload.new.prompt !== undefined) {
+            const nextPrompt = payload.new.prompt as string | null
+            const previousPrompt = latestPromptRef.current
+
+            if (nextPrompt !== previousPrompt) {
+              if (nextPrompt) {
+                console.log("New prompt received, showing breathing transition")
+                setShowBreathing(true)
+              } else {
+                setShowBreathing(false)
+              }
+
+              setPrompt(nextPrompt)
+              latestPromptRef.current = nextPrompt
+              setSelected(null)
+              setShowInput(false)
+              setReflection("")
+              setResponses([])
+
+              // Update current round when prompt changes
+              if (payload.new.current_round !== undefined) {
+                setCurrentRound(payload.new.current_round)
+              }
             }
           }
 
@@ -459,6 +476,16 @@ export default function PlayContent() {
           if (payload.new.phase !== undefined) {
             console.log("Received phase update:", payload.new.phase)
             setPhase(payload.new.phase)
+
+            if (payload.new.phase === "lobby") {
+              setPrompt(null)
+              latestPromptRef.current = null
+              setShowBreathing(false)
+              setSelected(null)
+              setShowInput(false)
+              setReflection("")
+              setResponses([])
+            }
           }
 
           // Handle mode updates
@@ -536,7 +563,7 @@ export default function PlayContent() {
         </div>
       )}
 
-      {prompt && mode === "reflection" && (
+      {prompt && mode === "reflection" && phase !== "lobby" && (
         <div className="fade-in">
           <PromptCard prompt={prompt} />
         </div>
