@@ -8,12 +8,14 @@ import { Timer } from "./Timer"
 interface OppositeActionRaceHostProps {
   gameId: string
   players: Array<{ id: string; name: string }>
+  currentRound: number
   onRaceComplete: (winnerId: string, responses: any[]) => void
 }
 
 export function OppositeActionRaceHost({
   gameId,
   players,
+  currentRound,
   onRaceComplete
 }: OppositeActionRaceHostProps) {
   const [currentPrompt, setCurrentPrompt] = useState<OppositeActionPrompt | null>(null)
@@ -70,6 +72,10 @@ export function OppositeActionRaceHost({
         table: "race_responses",
         filter: `game_id=eq.${gameId}`,
       }, (payload: any) => {
+        if (payload.new?.round !== undefined && payload.new.round !== currentRound) {
+          return
+        }
+
         console.log("Received race response INSERT:", payload.new)
         const newResponse = {
           playerId: payload.new.player_id,
@@ -88,7 +94,7 @@ export function OppositeActionRaceHost({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [gameId, raceActive, players])
+  }, [gameId, raceActive, players, currentRound])
 
   // Check if all players have submitted and end race early
   useEffect(() => {

@@ -12,6 +12,63 @@ import { RaceRoundSummary } from "../components/RaceRoundSummary"
 import { OppositeActionRace } from "../components/OppositeActionRace"
 import { Leaderboard } from "../components/Leaderboard"
 
+type RaceResponse = {
+  playerId: string
+  playerName: string
+  action: string
+  timestamp: number
+}
+
+type RaceResponseInput = {
+  playerId?: unknown
+  player_id?: unknown
+  playerName?: unknown
+  player_name?: unknown
+  action?: unknown
+  timestamp?: unknown
+}
+
+type PlayerInfo = {
+  id: string
+  name: string
+}
+
+function normalizeRaceResponses(
+  rawResponses: unknown[] | null | undefined,
+  players: PlayerInfo[]
+): RaceResponse[] {
+  if (!Array.isArray(rawResponses)) return []
+
+  return rawResponses
+    .map((rawResponse) => {
+      if (!rawResponse || typeof rawResponse !== "object") return null
+
+      const response = rawResponse as RaceResponseInput
+      const playerId = response.playerId ?? response.player_id
+      const playerNameFromPayload = response.playerName ?? response.player_name
+      const playerNameFromPlayers =
+        typeof playerId === "string"
+          ? players.find((p) => p.id === playerId)?.name
+          : undefined
+
+      if (typeof playerId !== "string" || typeof response.action !== "string") return null
+
+      return {
+        playerId,
+        playerName:
+          typeof playerNameFromPayload === "string"
+            ? playerNameFromPayload
+            : playerNameFromPlayers || "Unknown",
+        action: response.action,
+        timestamp:
+          typeof response.timestamp === "number"
+            ? response.timestamp
+            : Number(response.timestamp ?? Date.now()),
+      }
+    })
+    .filter((response): response is RaceResponse => response !== null)
+}
+
 export default function PlayContent() {
   const params = useSearchParams()
   const gameId = params.get("game")
@@ -124,7 +181,7 @@ export default function PlayContent() {
 
         if (data?.race_responses) {
           console.log("Loaded race_responses:", data.race_responses)
-          setRaceResponses(data.race_responses)
+          setRaceResponses(normalizeRaceResponses(data.race_responses, players))
         }
 
         if (data?.race_time_left !== undefined) {
@@ -230,34 +287,23 @@ export default function PlayContent() {
 
     async function loadRaceResponses() {
       try {
-        const res = await fetch(`/api/game/race-response?gameId=${gameId}`)
+        const res = await fetch(`/api/game/race-response?gameId=${gameId}&round=${currentRound}`)
         if (!res.ok) {
           console.error("Error loading race responses:", res.statusText)
           return
         }
 
         const payload = await res.json()
-        const data = (payload.responses || []) as Array<{
-          player_id: string
-          action: string
-          timestamp: number
-        }>
+        const data = payload.responses || []
 
-        setRaceResponses(
-          data.map((r) => ({
-            playerId: r.player_id,
-            playerName: players.find((p) => p.id === r.player_id)?.name || "Unknown",
-            action: r.action,
-            timestamp: r.timestamp,
-          }))
-        )
+        setRaceResponses(normalizeRaceResponses(data, players))
       } catch (err) {
         console.error("Error loading race responses:", err)
       }
     }
 
     loadRaceResponses()
-  }, [gameId, phase, players])
+  }, [gameId, phase, players, currentRound])
 
   // Subscribe to race responses during the race
   useEffect(() => {
@@ -274,21 +320,20 @@ export default function PlayContent() {
           filter: `game_id=eq.${gameId}`,
         },
         (payload: any) => {
-          const playerName = players.find((p) => p.id === payload.new.player_id)?.name || "Unknown"
+          if (payload.new?.round !== undefined && payload.new.round !== currentRound) {
+            return
+          }
+
+          const normalized = normalizeRaceResponses([payload.new], players)
+          if (normalized.length === 0) return
+          const newResponse = normalized[0]
+
           setRaceResponses((prev) => {
             const exists = prev.some(
-              (r) => r.playerId === payload.new.player_id && r.timestamp === payload.new.timestamp
+              (r) => r.playerId === newResponse.playerId && r.timestamp === newResponse.timestamp
             )
             if (exists) return prev
-            return [
-              ...prev,
-              {
-                playerId: payload.new.player_id,
-                playerName,
-                action: payload.new.action,
-                timestamp: payload.new.timestamp,
-              },
-            ]
+            return [...prev, newResponse]
           })
         }
       )
@@ -297,36 +342,31 @@ export default function PlayContent() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [gameId, phase, players])
+  }, [gameId, phase, players, currentRound])
 
-  // Load race responses for players during race reveal (fallback to table data)
+  // Load race responses for players during race reveal from per-round game state
   useEffect(() => {
     if (!gameId || phase !== "race_reveal") return
 
     async function loadRaceResponses() {
       try {
-        const res = await fetch(`/api/game/race-response?gameId=${gameId}`)
-        if (!res.ok) {
-          console.error("Error loading race responses:", res.statusText)
+        const { data, error } = await supabase
+          .from("games")
+          .select("race_responses, race_winner")
+          .eq("id", gameId)
+          .single()
+
+        if (error) {
+          console.error("Error loading race reveal data:", error)
           return
         }
 
-        const payload = await res.json()
-        const data = (payload.responses || []) as Array<{
-          player_id: string
-          action: string
-          timestamp: number
-        }>
+        if (data?.race_winner !== undefined) {
+          setRaceWinner(data.race_winner)
+        }
 
-        if (data.length > 0) {
-          setRaceResponses(
-            data.map((r) => ({
-              playerId: r.player_id,
-              playerName: players.find((p) => p.id === r.player_id)?.name || "Unknown",
-              action: r.action,
-              timestamp: r.timestamp,
-            }))
-          )
+        if (data?.race_responses) {
+          setRaceResponses(normalizeRaceResponses(data.race_responses, players))
         }
       } catch (err) {
         console.error("Error loading race responses:", err)
@@ -351,21 +391,20 @@ export default function PlayContent() {
           filter: `game_id=eq.${gameId}`,
         },
         (payload: any) => {
-          const playerName = players.find((p) => p.id === payload.new.player_id)?.name || "Unknown"
+          if (payload.new?.round !== undefined && payload.new.round !== currentRound) {
+            return
+          }
+
+          const normalized = normalizeRaceResponses([payload.new], players)
+          if (normalized.length === 0) return
+          const newResponse = normalized[0]
+
           setRaceResponses((prev) => {
             const exists = prev.some(
-              (r) => r.playerId === payload.new.player_id && r.timestamp === payload.new.timestamp
+              (r) => r.playerId === newResponse.playerId && r.timestamp === newResponse.timestamp
             )
             if (exists) return prev
-            return [
-              ...prev,
-              {
-                playerId: payload.new.player_id,
-                playerName,
-                action: payload.new.action,
-                timestamp: payload.new.timestamp,
-              },
-            ]
+            return [...prev, newResponse]
           })
         }
       )
@@ -374,7 +413,7 @@ export default function PlayContent() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [gameId, phase, players])
+  }, [gameId, phase, players, currentRound])
 
   // Combined subscription for game state updates (prompt and phase)
   useEffect(() => {
@@ -448,7 +487,7 @@ export default function PlayContent() {
           if (payload.new.race_responses !== undefined) {
             console.log("Received race_responses update:", payload.new.race_responses)
             console.log("Race responses length:", payload.new.race_responses?.length || 0)
-            setRaceResponses(payload.new.race_responses || [])
+            setRaceResponses(normalizeRaceResponses(payload.new.race_responses || [], players))
             console.log("Set raceResponses to:", payload.new.race_responses || [])
           }
 
@@ -474,6 +513,8 @@ export default function PlayContent() {
       </div>
     )
   }
+
+  const displayRaceResponses = normalizeRaceResponses(raceResponses, players)
 
   return (
     <div className="p-10 space-y-8 bg-[#FAFAF7] min-h-screen">
@@ -595,7 +636,7 @@ export default function PlayContent() {
             racePrompt={racePrompt}
             onSubmit={submitRaceResponse}
             timeLeft={raceTimeLeft || 90}
-            responses={raceResponses}
+            responses={displayRaceResponses}
           />
         </div>
       )}
@@ -605,7 +646,7 @@ export default function PlayContent() {
         <div className="fade-in">
           <RaceRoundSummary
             racePrompt={racePrompt}
-            responses={raceResponses}
+            responses={displayRaceResponses}
             winnerId={raceWinner}
             gameId={gameId || undefined}
             playerId={playerId || undefined}

@@ -305,7 +305,7 @@ export default function HostPage() {
     if (!gameId) return
 
     try {
-      const res = await fetch(`/api/game/race-response?gameId=${gameId}`)
+      const res = await fetch(`/api/game/race-response?gameId=${gameId}&round=${currentRound}`)
       const data = await res.json()
 
       if (res.ok && data.responses) {
@@ -450,6 +450,7 @@ export default function HostPage() {
             <OppositeActionRaceHost
               gameId={gameId}
               players={players}
+              currentRound={currentRound}
               onRaceComplete={handleRaceComplete}
             />
           )}
@@ -614,6 +615,7 @@ export default function HostPage() {
           <OppositeActionRaceHost
             gameId={gameId}
             players={players}
+            currentRound={currentRound}
             onRaceComplete={handleRaceComplete}
           />
 

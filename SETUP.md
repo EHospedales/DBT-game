@@ -96,6 +96,7 @@ CREATE TABLE race_responses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
   player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  round INTEGER NOT NULL DEFAULT 0,
   action TEXT NOT NULL,
   timestamp BIGINT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
@@ -103,15 +104,27 @@ CREATE TABLE race_responses (
 
 CREATE INDEX idx_race_responses_game_id ON race_responses(game_id);
 CREATE INDEX idx_race_responses_player_id ON race_responses(player_id);
+CREATE INDEX idx_race_responses_game_round ON race_responses(game_id, round);
 ```
 
 **Columns:**
 - `id` (UUID): Unique response identifier
 - `game_id` (UUID): Foreign key to the game
 - `player_id` (UUID): Foreign key to the player
+- `round` (INTEGER): Round number the race response belongs to
 - `action` (TEXT): The player's opposite action response
 - `timestamp` (BIGINT): Timestamp when response was submitted
 - `created_at` (TIMESTAMPTZ): When the response was created
+
+For existing databases created before `round` was added:
+
+```sql
+ALTER TABLE race_responses
+ADD COLUMN IF NOT EXISTS round INTEGER NOT NULL DEFAULT 0;
+
+CREATE INDEX IF NOT EXISTS idx_race_responses_game_round
+ON race_responses(game_id, round);
+```
 
 ### 5. `favorites` table
 
